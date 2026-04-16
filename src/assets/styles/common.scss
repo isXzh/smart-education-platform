@@ -1,0 +1,29 @@
+.common-container {
+  padding: 20px 235px !important;
+  //   padding: calc(var(--spacing) * 6) !important;
+}
+.el-button {
+  border-radius: 7px;
+}
+.el-dialog {
+  border-radius: 15px;
+  .el-dialog__header {
+    padding: 20px;
+    border-top-right-radius: 15px;
+    border-top-left-radius: 15px;
+    background-color: #425cee;
+    .el-dialog__title {
+      color: white;
+    }
+    .el-dialog__headerbtn .el-dialog__close {
+      color: white;
+      font-size: 18px;
+    }
+  }
+  .el-dialog__footer {
+    border-top: 1px solid #e4e7ed;
+    background-color: #f9fafb;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+  }
+}
