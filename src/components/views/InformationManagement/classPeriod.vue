@@ -256,9 +256,25 @@ export default {
     },
     // 下载导入模板
     async uploadExcel() {
-      let res = await classPeriod.downloadTemplate();
-      if (res.code == 200) {
-        console.log("模板====", res);
+      try {
+        const res = await classPeriod.downloadTemplate();
+        // 创建临时 URL
+        const blob = new Blob([res]);
+        const url = window.URL.createObjectURL(blob);
+        // 创建下载链接
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "课时导入模板.xlsx";
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        // 清理
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.$message.success("模板下载成功");
+      } catch (error) {
+        this.$message.error("模板下载失败");
+        console.error("下载模板失败:", error);
       }
     },
     // 初始化拖拽排序

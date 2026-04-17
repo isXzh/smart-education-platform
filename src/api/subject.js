@@ -3,7 +3,7 @@ import http from "@/utils/http.js";
 export default {
   // 修改学科
   async update(id, data) {
-    return await http.put(`/api/base/subject/${id}`, data);
+    return await http.put2(`/api/base/subject/${id}`, data);
   },
   // 删除学科
   async delete(id) {
@@ -25,7 +25,7 @@ export default {
   },
   // 分页查询学科
   async page(params) {
-    return await http.get("/api/base/subject/page", params);
+    return await http.post("/api/base/subject/page", params);
   },
   // 获取学科列表
   async list() {

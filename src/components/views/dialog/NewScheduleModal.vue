@@ -11,24 +11,6 @@
 
     <div class="modal-body">
       <el-form ref="form" :model="form" :rules="rules" label-position="top">
-        <!-- 教学活动类型 -->
-        <el-form-item label="教学活动类型" prop="activityType">
-          <div class="activity-type-group">
-            <div
-              :class="['type-option', { active: form.activityType === '校内' }]"
-              @click="form.activityType = '校内'"
-            >
-              校内
-            </div>
-            <div
-              :class="['type-option', { active: form.activityType === '校外' }]"
-              @click="form.activityType = '校外'"
-            >
-              校外
-            </div>
-          </div>
-        </el-form-item>
-
         <!-- 学段 -->
         <el-form-item label="学段" prop="gradeLevel">
           <el-select
@@ -165,7 +147,38 @@
             :readonly="true"
           ></el-input>
         </el-form-item>
-
+        <!-- 教学活动类型 -->
+        <el-form-item label="教学类型" prop="activityType">
+          <div class="activity-type-group">
+            <div
+              :class="['type-option', { active: form.activityType === '校内' }]"
+              @click="form.activityType = '校内'"
+            >
+              日常教学
+            </div>
+            <div
+              :class="['type-option', { active: form.activityType === '校外' }]"
+              @click="form.activityType = '校外'"
+            >
+              户外教学
+            </div>
+          </div>
+        </el-form-item>
+        <!-- 状态 -->
+        <el-form-item label="状态" prop="status">
+          <el-select
+            v-model="form.status"
+            placeholder="请选择状态"
+            class="full-width"
+          >
+            <el-option
+              v-for="item in statusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            ></el-option>
+          </el-select>
+        </el-form-item>
         <!-- 主讲教室 -->
         <el-form-item label="主讲教室" prop="mainClassroom">
           <div class="classroom-selector">
@@ -286,8 +299,9 @@ export default {
   data() {
     return {
       form: {
-        activityType: "校内",
+        status: 1,
         gradeLevel: "",
+        activityType: "校内",
         course: "",
         subject: "",
         teacher: "",
@@ -297,6 +311,10 @@ export default {
         mainClassroom: [],
         assistClassroom: [],
       },
+      statusOptions: [
+        { label: "取消", value: 0 },
+        { label: "正常", value: 1 },
+      ],
       rules: {
         activityType: [
           { required: true, message: "请选择教学活动类型", trigger: "change" },
@@ -310,6 +328,7 @@ export default {
         courseDate: [
           { required: true, message: "请选择上课日期", trigger: "change" },
         ],
+        status: [{ required: true, message: "请选择状态", trigger: "change" }],
         coursePeriod: [
           { required: true, message: "请选择上课节次", trigger: "change" },
         ],

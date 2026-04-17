@@ -18,9 +18,9 @@
     <div class="dialog-body">
       <el-form ref="form" :model="form" :rules="rules" label-position="top">
         <!-- 学科名称 -->
-        <el-form-item label="学科名称" prop="name">
+        <el-form-item label="学科名称" prop="subjectName">
           <el-input
-            v-model="form.name"
+            v-model="form.subjectName"
             placeholder="请输入学科名称，如：语文、数学"
             class="form-input"
             maxlength="20"
@@ -30,9 +30,9 @@
         </el-form-item>
 
         <!-- 学科代码 -->
-        <el-form-item label="学科代码" prop="code">
+        <el-form-item label="学科代码" prop="subjectCode">
           <el-input
-            v-model="form.code"
+            v-model="form.subjectCode"
             placeholder="请输入学科代码，如：YW、SX"
             class="form-input"
             maxlength="6"
@@ -42,9 +42,9 @@
         </el-form-item>
 
         <!-- 所属学段 -->
-        <el-form-item label="所属学段" prop="period">
+        <el-form-item label="所属学段" prop="stageId">
           <el-select
-            v-model="form.period"
+            v-model="form.stageId"
             placeholder="请选择所属学段"
             class="form-select"
           >
@@ -55,7 +55,7 @@
               :value="item.value"
             />
           </el-select>
-          <div class="form-hint">当前选择：{{ form.period || "未选择" }}</div>
+          <div class="form-hint">当前选择：{{ getStageLabel(form.stageId) || "未选择" }}</div>
         </el-form-item>
 
         <!-- 状态 -->
@@ -63,15 +63,15 @@
           <div class="status-radio-group">
             <div
               class="status-option"
-              :class="{ active: form.status === '启用' }"
-              @click="form.status = '启用'"
+              :class="{ active: form.status === 1 }"
+              @click="form.status = 1"
             >
               启用
             </div>
             <div
               class="status-option"
-              :class="{ active: form.status === '禁用' }"
-              @click="form.status = '禁用'"
+              :class="{ active: form.status === 0 }"
+              @click="form.status = 0"
             >
               禁用
             </div>
@@ -83,24 +83,24 @@
         <el-form-item label="预览：">
           <div class="preview-card">
             <div class="preview-header">
-              <div class="preview-name">（{{ form.name || "学科名称" }}）</div>
+              <div class="preview-name">（{{ form.subjectName || "学科名称" }}）</div>
               <el-tag
                 size="small"
-                :type="getPeriodTagType(form.period)"
+                :type="getPeriodTagType(form.stageId)"
                 effect="light"
               >
-                {{ form.period || "学段" }}
+                {{ getStageLabel(form.stageId) || "学段" }}
               </el-tag>
             </div>
             <div class="preview-info">
-              <div>代码：（{{ form.code || "学科代码" }}）</div>
+              <div>代码：（{{ form.subjectCode || "学科代码" }}）</div>
               <el-tag
                 size="small"
-                :type="form.status === '启用' ? 'success' : 'info'"
+                :type="form.status === 1 ? 'success' : 'info'"
                 effect="light"
                 class="status-tag"
               >
-                {{ form.status }}
+                {{ form.status === 1 ? '启用' : '禁用' }}
               </el-tag>
             </div>
           </div>
@@ -129,6 +129,8 @@
 </template>
 
 <script>
+import gradeLevelApi from "@/api/gradeLevel.js";
+
 export default {
   name: "SubjectDialog",
   props: {
@@ -148,13 +150,13 @@ export default {
   data() {
     return {
       form: {
-        name: "",
-        code: "",
-        period: "",
-        status: "启用",
+        subjectName: "",
+        subjectCode: "",
+        stageId: null,
+        status: 1,
       },
       rules: {
-        name: [
+        subjectName: [
           { required: true, message: "请输入学科名称", trigger: "blur" },
           {
             min: 2,
@@ -163,7 +165,7 @@ export default {
             trigger: "blur",
           },
         ],
-        code: [
+        subjectCode: [
           { required: true, message: "请输入学科代码", trigger: "blur" },
           {
             pattern: /^[A-Z]{2,6}$/,
@@ -171,55 +173,71 @@ export default {
             trigger: "blur",
           },
         ],
-        period: [
+        stageId: [
           { required: true, message: "请选择所属学段", trigger: "change" },
         ],
       },
-      periodOptions: [
-        { label: "幼儿园", value: "幼儿园" },
-        { label: "小学", value: "小学" },
-        { label: "初中", value: "初中" },
-        { label: "高中", value: "高中" },
-      ],
+      periodOptions: [],
     };
   },
   watch: {
     visible(val) {
       if (val) {
         this.initForm();
+        this.loadStageOptions();
       }
     },
-    "form.code"(val) {
-      // 自动转换为大写
+    "form.subjectCode"(val) {
       if (val) {
-        this.form.code = val.toUpperCase();
+        this.form.subjectCode = val.toUpperCase();
       }
     },
   },
   methods: {
+    async loadStageOptions() {
+      try {
+        const result = await gradeLevelApi.list();
+        this.periodOptions = (result.data || []).map(item => ({
+          label: item.stageName,
+          value: item.id
+        }));
+      } catch (error) {
+        this.$message.error('加载学段列表失败');
+      }
+    },
+    getStageLabel(stageId) {
+      const stage = this.periodOptions.find(item => item.value === stageId);
+      return stage ? stage.label : '学段';
+    },
+    getPeriodTagType(stageId) {
+      const label = this.getStageLabel(stageId);
+      const types = {
+        '幼儿园': "info",
+        '小学': "primary",
+        '初中': "success",
+        '高中': "warning",
+      };
+      return types[label] || "";
+    },
     initForm() {
       if (this.editData) {
-        this.form = { ...this.editData };
+        this.form = {
+          subjectName: this.editData.subjectName,
+          subjectCode: this.editData.subjectCode,
+          stageId: this.editData.stageId,
+          status: this.editData.status,
+        };
       } else {
         this.form = {
-          name: "",
-          code: "",
-          period: "",
-          status: "启用",
+          subjectName: "",
+          subjectCode: "",
+          stageId: null,
+          status: 1,
         };
       }
       this.$nextTick(() => {
         this.$refs.form && this.$refs.form.clearValidate();
       });
-    },
-    getPeriodTagType(period) {
-      const types = {
-        幼儿园: "info",
-        小学: "primary",
-        初中: "success",
-        高中: "warning",
-      };
-      return types[period] || "";
     },
     handleClose() {
       this.$emit("update:visible", false);

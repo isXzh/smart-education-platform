@@ -40,13 +40,14 @@
           prefix-icon="el-icon-search"
           class="search-input"
           clearable
+          @input="handleSearch"
         />
       </div>
 
       <!-- 数据表格 -->
       <div class="table-container">
         <el-table
-          :data="filteredSubjectList"
+          :data="subjectList"
           style="width: 100%"
           :header-cell-style="headerCellStyle"
           :cell-style="cellStyle"
@@ -64,21 +65,25 @@
                 <div class="subject-icon">
                   <i class="el-icon-reading"></i>
                 </div>
-                <span>{{ row.name }}</span>
+                <span>{{ row.subjectName }}</span>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column prop="code" label="学科代码" min-width="150" />
+          <el-table-column
+            prop="subjectCode"
+            label="学科代码"
+            min-width="150"
+          />
 
           <el-table-column label="所属学段" min-width="150">
             <template #default="{ row }">
               <el-tag
                 size="small"
-                :type="getPeriodTagType(row.period)"
+                :type="getPeriodTagType(getStageName(row.stageId))"
                 effect="plain"
               >
-                {{ row.period }}
+                {{ getStageName(row.stageId) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -87,15 +92,15 @@
             <template #default="{ row }">
               <el-tag
                 size="small"
-                :type="row.status === '启用' ? 'success' : 'info'"
+                :type="row.status === 1 ? 'success' : 'info'"
                 effect="light"
               >
-                {{ row.status }}
+                {{ row.status === 1 ? "启用" : "禁用" }}
               </el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column prop="createTime" label="创建时间" min-width="150" />
+          <el-table-column prop="createdAt" label="创建时间" min-width="150" />
 
           <el-table-column
             label="操作"
@@ -129,8 +134,8 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <div class="pagination-left">
-          显示 1 - {{ filteredSubjectList.length }} 条，共
-          {{ subjectList.length }} 条
+          显示 {{ (currentPage - 1) * pageSize + 1 }} -
+          {{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
         </div>
         <el-pagination
           background
@@ -138,8 +143,9 @@
           :page-size="pageSize"
           :page-sizes="[10, 20, 50]"
           layout="prev, pager, next, jumper"
-          :total="subjectList.length"
+          :total="total"
           @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
         />
       </div>
 
@@ -169,6 +175,8 @@
 
 <script>
 import SubjectDialog from "../dialog/SubjectDialog.vue";
+import subjectApi from "@/api/subject.js";
+import gradeLevelApi from "@/api/gradeLevel.js";
 
 export default {
   name: "SubjectManagement",
@@ -180,115 +188,55 @@ export default {
       searchText: "",
       currentPage: 1,
       pageSize: 10,
+      total: 0,
       dialogVisible: false,
       dialogTitle: "新增学科",
       editData: null,
-      subjectList: [
-        {
-          id: 1,
-          name: "语文",
-          code: "YW",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 2,
-          name: "数学",
-          code: "SX",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 3,
-          name: "英语",
-          code: "YY",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 4,
-          name: "科学",
-          code: "KX",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 5,
-          name: "体育",
-          code: "TY",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 6,
-          name: "音乐",
-          code: "YL",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 7,
-          name: "美术",
-          code: "MS",
-          period: "小学",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 8,
-          name: "语文",
-          code: "YW",
-          period: "初中",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 9,
-          name: "数学",
-          code: "SX",
-          period: "初中",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-        {
-          id: 10,
-          name: "英语",
-          code: "YY",
-          period: "初中",
-          status: "启用",
-          createTime: "2024-01-15",
-        },
-      ],
+      subjectList: [],
+      stageList: [],
+      searchTimer: null, // 防抖计时器
     };
   },
   computed: {
     stats() {
       return {
-        total: this.subjectList.length,
-        enabled: this.subjectList.filter((item) => item.status === "启用")
-          .length,
-        disabled: this.subjectList.filter((item) => item.status === "禁用")
-          .length,
+        total: this.total,
+        enabled: this.subjectList.filter((item) => item.status === 1).length,
+        disabled: this.subjectList.filter((item) => item.status === 0).length,
       };
     },
-    filteredSubjectList() {
-      if (!this.searchText) return this.subjectList;
-      const keyword = this.searchText.toLowerCase();
-      return this.subjectList.filter(
-        (item) =>
-          item.name.toLowerCase().includes(keyword) ||
-          item.code.toLowerCase().includes(keyword) ||
-          item.period.toLowerCase().includes(keyword)
-      );
-    },
+  },
+  created() {
+    this.loadStageList();
+    this.loadSubjectList();
   },
   methods: {
+    async loadStageList() {
+      try {
+        const result = await gradeLevelApi.list();
+        this.stageList = result.data || [];
+      } catch (error) {
+        this.$message.error("加载学段列表失败");
+      }
+    },
+    async loadSubjectList() {
+      try {
+        const params = {
+          pageNum: this.currentPage,
+          pageSize: this.pageSize,
+          keyword: this.searchText,
+        };
+        const result = await subjectApi.page(params);
+        this.subjectList = result.data.list || [];
+        this.total = result.data.total || 0;
+      } catch (error) {
+        this.$message.error("加载学科列表失败");
+      }
+    },
+    getStageName(stageId) {
+      const stage = this.stageList.find((item) => item.id === stageId);
+      return stage ? stage.stageName : "";
+    },
     headerCellStyle() {
       return {
         background: "#f9fafb",
@@ -315,6 +263,24 @@ export default {
     },
     handleCurrentChange(page) {
       this.currentPage = page;
+      this.loadSubjectList();
+    },
+    handleSizeChange(size) {
+      this.pageSize = size;
+      this.currentPage = 1;
+      this.loadSubjectList();
+    },
+    handleSearch() {
+      // 清除之前的计时器
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer);
+      }
+
+      // 设置新的计时器，300ms 后执行搜索
+      this.searchTimer = setTimeout(() => {
+        this.currentPage = 1;
+        this.loadSubjectList();
+      }, 300);
     },
     handleAddSubject() {
       this.dialogTitle = "新增学科";
@@ -326,44 +292,42 @@ export default {
       this.editData = { ...row };
       this.dialogVisible = true;
     },
-    handleDeleteSubject(row) {
-      this.$confirm(`确认删除学科 "${row.name}" 吗？`, "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(() => {
-          const index = this.subjectList.findIndex(
-            (item) => item.id === row.id
-          );
-          if (index > -1) {
-            this.subjectList.splice(index, 1);
-          }
-          this.$message.success("删除成功");
-        })
-        .catch(() => {});
-    },
-    handleDialogConfirm(data) {
-      if (this.editData) {
-        // 编辑
-        const index = this.subjectList.findIndex(
-          (item) => item.id === this.editData.id
-        );
-        if (index > -1) {
-          this.subjectList.splice(index, 1, { ...this.editData, ...data });
+    async handleDeleteSubject(row) {
+      try {
+        await this.$confirm(`确认删除学科 "${row.subjectName}" 吗？`, "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        await subjectApi.delete(row.id);
+        this.$message.success("删除成功");
+        await this.loadSubjectList();
+      } catch (error) {
+        if (error !== "cancel") {
+          this.$message.error("删除失败");
         }
-        this.$message.success("编辑成功");
-      } else {
-        // 新增
-        const newSubject = {
-          id: this.subjectList.length + 1,
-          ...data,
-          createTime: new Date().toISOString().split("T")[0],
-        };
-        this.subjectList.push(newSubject);
-        this.$message.success("新增成功");
       }
     },
+    async handleDialogConfirm(formData) {
+      try {
+        if (this.editData) {
+          await subjectApi.update(this.editData.id, formData);
+          this.$message.success("编辑成功");
+        } else {
+          await subjectApi.add(formData);
+          this.$message.success("新增成功");
+        }
+        this.dialogVisible = false;
+        await this.loadSubjectList();
+      } catch (error) {
+        this.$message.error(this.editData ? "编辑失败" : "新增失败");
+      }
+    },
+  },
+  beforeDestroy() {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
   },
 };
 </script>
