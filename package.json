@@ -21,6 +21,7 @@
     "autoprefixer": "^10.4.27",
     "babel-plugin-component": "^1.1.1",
     "postcss": "^8.5.9",
+    "prettier": "^3.8.3",
     "sass": "^1.99.0",
     "sass-loader": "^14.1.0",
     "tailwindcss": "^3.4.19",
