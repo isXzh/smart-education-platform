@@ -1,11 +1,11 @@
 <template>
-  <div class="subject-management-page common-container">
+  <div class="grades-management-page common-container">
     <!-- 页面标题和面包屑 -->
     <div class="page-header">
       <div class="breadcrumb">
         <span class="breadcrumb-item">基础信息管理</span>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-item active">学科管理</span>
+        <span class="breadcrumb-item active">年级管理</span>
       </div>
     </div>
 
@@ -14,99 +14,101 @@
       <!-- 页面标题栏 -->
       <div class="content-header">
         <div class="title-section">
-          <i class="el-icon-collection"></i>
-          <span class="title">学科管理</span>
-          <div class="stats-tags">
-            <span class="stat-tag total">总计 {{ stats.total }}</span>
-            <span class="stat-tag enabled">启用 {{ stats.enabled }}</span>
-            <span class="stat-tag disabled">禁用 {{ stats.disabled }}</span>
-          </div>
+          <i class="el-icon-s-order"></i>
+          <span class="title">年级管理</span>
         </div>
-        <el-button type="primary" class="add-subject-btn" @click="handleAddSubject">
-          <i class="el-icon-plus"></i>
-          新增学科
-        </el-button>
+        <div class="header-actions">
+          <el-button type="primary" class="add-grade-btn" @click="handleAddGrade">
+            <i class="el-icon-plus"></i>
+            新增年级
+          </el-button>
+          <el-button class="import-btn" @click="handleBatchImport">
+            <i class="el-icon-upload2"></i>
+            批量导入
+          </el-button>
+        </div>
       </div>
 
-      <!-- 搜索栏 -->
+      <!-- 搜索筛选栏 -->
       <div class="search-bar">
-        <el-input
-          v-model="searchText"
-          placeholder="搜索学科名称、代码或学段..."
-          prefix-icon="el-icon-search"
-          class="search-input"
-          clearable
-          @input="handleSearch"
-        />
+        <div class="search-left">
+          <el-input
+            v-model="searchText"
+            placeholder="搜索年级名称"
+            prefix-icon="el-icon-search"
+            class="search-input"
+            clearable
+            @input="handleSearch"
+          />
+        </div>
+        <div class="search-right">
+          <el-select
+            v-model="selectedStage"
+            placeholder="全部学段"
+            class="stage-select"
+            clearable
+            @change="handleStageChange"
+          >
+            <el-option v-for="stage in stageList" :key="stage.id" :label="stage.stageName" :value="stage.id" />
+          </el-select>
+        </div>
       </div>
 
       <!-- 数据表格 -->
       <div class="table-container">
-        <el-table :data="subjectList" style="width: 100%" :header-cell-style="headerCellStyle" :cell-style="cellStyle">
+        <el-table :data="gradeList" style="width: 100%" :header-cell-style="headerCellStyle" :cell-style="cellStyle">
           <el-table-column type="index" label="序号" width="80" align="center" />
 
-          <el-table-column label="学科名称" min-width="200">
+          <el-table-column label="年级名称" min-width="200">
             <template #default="{ row }">
-              <div class="subject-name-cell">
-                <div class="subject-icon">
-                  <i class="el-icon-reading"></i>
+              <div class="grade-name-cell">
+                <div class="grade-icon">
+                  <i class="el-icon-s-flag"></i>
                 </div>
-                <span>{{ row.subjectName }}</span>
+                <span>{{ row.gradeName }}</span>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column prop="subjectCode" label="学科代码" min-width="150" />
-
           <el-table-column label="所属学段" min-width="150">
             <template #default="{ row }">
-              <el-tag size="small" :type="getPeriodTagType(getStageName(row.stageId))" effect="plain">
-                {{ getStageName(row.stageId) }}
+              <el-tag size="small" :type="getStageTagType(row.stageName)" effect="plain">
+                {{ row.stageName }}
               </el-tag>
             </template>
           </el-table-column>
+
+          <el-table-column prop="sortOrder" label="排序" min-width="100" align="center" />
 
           <el-table-column label="状态" min-width="120" align="center">
             <template #default="{ row }">
-              <el-tag size="small" :type="row.status === 1 ? 'success' : 'info'" effect="light">
-                {{ row.status === 1 ? '启用' : '禁用' }}
-              </el-tag>
+              <el-switch
+                v-model="row.status"
+                :active-value="1"
+                :inactive-value="0"
+                active-color="#10b981"
+                inactive-color="#d1d5db"
+                @change="handleStatusChange(row)"
+              />
+              <span class="status-text">{{ row.status === 1 ? '启用' : '禁用' }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column prop="createdAt" label="创建时间" min-width="150" />
+          <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
 
           <el-table-column label="操作" width="120" fixed="right" align="center">
             <template #default="{ row }">
               <div class="table-actions">
-                <el-button type="text" size="small" @click="handleEditSubject(row)">
+                <el-button type="text" size="small" @click="handleEditGrade(row)">
                   <i class="el-icon-edit"></i>
                 </el-button>
-                <el-button type="text" size="small" class="delete-btn" @click="handleDeleteSubject(row)">
+                <el-button type="text" size="small" class="delete-btn" @click="handleDeleteGrade(row)">
                   <i class="el-icon-delete"></i>
                 </el-button>
               </div>
             </template>
           </el-table-column>
         </el-table>
-      </div>
-
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <div class="pagination-left">
-          显示 {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, total) }} 条，共
-          {{ total }} 条
-        </div>
-        <el-pagination
-          background
-          :current-page="currentPage"
-          :page-size="pageSize"
-          :page-sizes="[10, 20, 50]"
-          layout="prev, pager, next, jumper"
-          :total="total"
-          @current-change="handleCurrentChange"
-          @size-change="handleSizeChange"
-        />
       </div>
 
       <!-- 使用提示 -->
@@ -116,86 +118,79 @@
           <span>使用提示：</span>
         </div>
         <ul class="tips-list">
-          <li>学科代码用于系统内部识别，建议使用简短的拼音首字母</li>
-          <li>不同学段的学科需要分别创建，方便按学段管理课程</li>
-          <li>禁用的学科在排课时将不可选择</li>
+          <li>年级名称在同一学段下不能重复</li>
+          <li>不同学段的年级需要分别创建，方便按学段管理</li>
+          <li>禁用的年级在排课时将不可选择</li>
+          <li>排序号越小，显示越靠前</li>
         </ul>
       </div>
     </div>
 
-    <!-- 新增学科弹窗 -->
-    <subject-dialog
+    <!-- 新增/编辑年级弹窗 -->
+    <grade-dialog
       :visible.sync="dialogVisible"
       :title="dialogTitle"
       :edit-data="editData"
+      :stage-list="stageList"
       @confirm="handleDialogConfirm"
     />
+
+    <!-- 批量导入弹窗 -->
+    <grade-import-dialog :visible.sync="importDialogVisible" @confirm="handleImportConfirm" />
   </div>
 </template>
 
 <script>
-  import SubjectDialog from '../dialog/SubjectDialog.vue';
-  import subjectApi from '@/api/subject.js';
-  import gradeLevelApi from '@/api/gradeLevel.js';
+  import GradeDialog from './dialog/GradeDialog.vue';
+  import GradeImportDialog from './dialog/GradeImportDialog.vue';
+  import gradeApi from '@/api/base.js';
 
   export default {
-    name: 'SubjectManagement',
+    name: 'GradesManagement',
     components: {
-      SubjectDialog,
+      GradeDialog,
+      GradeImportDialog,
     },
     data() {
       return {
         searchText: '',
-        currentPage: 1,
-        pageSize: 10,
-        total: 0,
+        selectedStage: '',
         dialogVisible: false,
-        dialogTitle: '新增学科',
+        importDialogVisible: false,
+        dialogTitle: '新增年级',
         editData: null,
-        subjectList: [],
+        gradeList: [],
         stageList: [],
-        searchTimer: null, // 防抖计时器
+        searchTimer: null,
       };
-    },
-    computed: {
-      stats() {
-        return {
-          total: this.total,
-          enabled: this.subjectList.filter(item => item.status === 1).length,
-          disabled: this.subjectList.filter(item => item.status === 0).length,
-        };
-      },
     },
     created() {
       this.loadStageList();
-      this.loadSubjectList();
+      this.loadGradeList();
     },
     methods: {
       async loadStageList() {
         try {
-          const result = await gradeLevelApi.list();
+          const result = await gradeApi.stageList();
           this.stageList = result.data || [];
         } catch (error) {
           this.$message.error('加载学段列表失败');
         }
       },
-      async loadSubjectList() {
+      async loadGradeList() {
         try {
-          const params = {
-            pageNum: this.currentPage,
-            pageSize: this.pageSize,
-            keyword: this.searchText,
-          };
-          const result = await subjectApi.page(params);
-          this.subjectList = result.data.list || [];
-          this.total = result.data.total || 0;
+          const params = {};
+          if (this.searchText) {
+            params.gradeName = this.searchText;
+          }
+          if (this.selectedStage) {
+            params.stageId = this.selectedStage;
+          }
+          const result = await gradeApi.gradeList(params);
+          this.gradeList = result.data || [];
         } catch (error) {
-          this.$message.error('加载学科列表失败');
+          this.$message.error('加载年级列表失败');
         }
-      },
-      getStageName(stageId) {
-        const stage = this.stageList.find(item => item.id === stageId);
-        return stage ? stage.stageName : '';
       },
       headerCellStyle() {
         return {
@@ -212,76 +207,88 @@
           color: '#4b5563',
         };
       },
-      getPeriodTagType(period) {
+      getStageTagType(stageName) {
         const types = {
           小学: 'primary',
           初中: 'success',
           高中: 'warning',
           幼儿园: 'info',
         };
-        return types[period] || '';
-      },
-      handleCurrentChange(page) {
-        this.currentPage = page;
-        this.loadSubjectList();
-      },
-      handleSizeChange(size) {
-        this.pageSize = size;
-        this.currentPage = 1;
-        this.loadSubjectList();
+        return types[stageName] || '';
       },
       handleSearch() {
-        // 清除之前的计时器
         if (this.searchTimer) {
           clearTimeout(this.searchTimer);
         }
-
-        // 设置新的计时器，300ms 后执行搜索
         this.searchTimer = setTimeout(() => {
-          this.currentPage = 1;
-          this.loadSubjectList();
+          this.loadGradeList();
         }, 300);
       },
-      handleAddSubject() {
-        this.dialogTitle = '新增学科';
+      handleStageChange() {
+        this.loadGradeList();
+      },
+      handleAddGrade() {
+        this.dialogTitle = '新增年级';
         this.editData = null;
         this.dialogVisible = true;
       },
-      handleEditSubject(row) {
-        this.dialogTitle = '编辑学科';
+      handleEditGrade(row) {
+        this.dialogTitle = '编辑年级';
         this.editData = { ...row };
         this.dialogVisible = true;
       },
-      async handleDeleteSubject(row) {
+      async handleDeleteGrade(row) {
         try {
-          await this.$confirm(`确认删除学科 "${row.subjectName}" 吗？`, '提示', {
+          await this.$confirm(`确认删除年级 "${row.gradeName}" 吗？`, '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning',
           });
-          await subjectApi.delete(row.id);
+          await gradeApi.delete(row.id);
           this.$message.success('删除成功');
-          await this.loadSubjectList();
+          await this.loadGradeList();
         } catch (error) {
           if (error !== 'cancel') {
             this.$message.error('删除失败');
           }
         }
       },
+      async handleStatusChange(row) {
+        try {
+          const updateData = {
+            gradeName: row.gradeName,
+            stageId: row.stageId,
+            sortOrder: row.sortOrder,
+            status: row.status,
+            remark: row.remark || '',
+          };
+          await gradeApi.update(row.id, updateData);
+          this.$message.success(row.status === 1 ? '已启用' : '已禁用');
+        } catch (error) {
+          this.$message.error('状态更新失败');
+          row.status = row.status === 1 ? 0 : 1;
+        }
+      },
       async handleDialogConfirm(formData) {
         try {
           if (this.editData) {
-            await subjectApi.update(this.editData.id, formData);
+            await gradeApi.update(this.editData.id, formData);
             this.$message.success('编辑成功');
           } else {
-            await subjectApi.add(formData);
+            await gradeApi.add(formData);
             this.$message.success('新增成功');
           }
           this.dialogVisible = false;
-          await this.loadSubjectList();
+          await this.loadGradeList();
         } catch (error) {
           this.$message.error(this.editData ? '编辑失败' : '新增失败');
         }
+      },
+      handleBatchImport() {
+        this.importDialogVisible = true;
+      },
+      handleImportConfirm(file) {
+        this.loadGradeList();
       },
     },
     beforeDestroy() {
@@ -293,7 +300,7 @@
 </script>
 
 <style lang="scss" scoped>
-  .subject-management-page {
+  .grades-management-page {
     min-height: 100%;
     background: #f3f4f6;
     padding: 16px 24px;
@@ -381,53 +388,99 @@
       }
     }
 
-    // .add-subject-btn {
-    //   background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-    //   border: none;
-    //   padding: 10px 20px;
-    //   border-radius: 8px;
-    //   font-size: 14px;
+    .header-actions {
+      display: flex;
+      gap: 12px;
 
-    //   &:hover {
-    //     background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
-    //   }
+      // .add-grade-btn {
+      //   background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      //   border: none;
+      //   padding: 10px 20px;
+      //   border-radius: 8px;
+      //   font-size: 14px;
 
-    //   i {
-    //     margin-right: 6px;
-    //   }
-    // }
+      //   &:hover {
+      //     background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+      //   }
+
+      //   i {
+      //     margin-right: 6px;
+      //   }
+      // }
+
+      .import-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+
+        &:hover {
+          border-color: #4f46e5;
+          color: #4f46e5;
+        }
+
+        i {
+          margin-right: 6px;
+        }
+      }
+    }
   }
 
   // 搜索栏
   .search-bar {
+    display: flex;
+    //   justify-content: space-between;
+    gap: 20px;
+    align-items: center;
     margin-bottom: 20px;
 
-    .search-input {
-      width: 440px;
+    .search-left {
+      .search-input {
+        width: 300px;
 
-      ::v-deep .el-input__inner {
-        border-radius: 8px;
-        border-color: #e5e7eb;
-        background: #f9fafb;
-        height: 40px;
-        padding-left: 40px;
+        ::v-deep .el-input__inner {
+          border-radius: 8px;
+          border-color: #e5e7eb;
+          background: #f9fafb;
+          height: 40px;
+          padding-left: 40px;
 
-        &:focus {
-          border-color: #4f46e5;
-          background: #fff;
+          &:focus {
+            border-color: #4f46e5;
+            background: #fff;
+          }
+
+          &::placeholder {
+            color: #9ca3af;
+          }
         }
 
-        &::placeholder {
-          color: #9ca3af;
+        ::v-deep .el-input__prefix {
+          left: 12px;
+
+          i {
+            color: #9ca3af;
+            font-size: 16px;
+          }
         }
       }
+    }
 
-      ::v-deep .el-input__prefix {
-        left: 12px;
+    .search-right {
+      .stage-select {
+        width: 180px;
 
-        i {
-          color: #9ca3af;
-          font-size: 16px;
+        ::v-deep .el-input__inner {
+          border-radius: 8px;
+          border-color: #e5e7eb;
+          background: #f9fafb;
+          height: 40px;
+
+          &:focus {
+            border-color: #4f46e5;
+            background: #fff;
+          }
         }
       }
     }
@@ -476,13 +529,13 @@
     }
   }
 
-  // 学科名称单元格
-  .subject-name-cell {
+  // 年级名称单元格
+  .grade-name-cell {
     display: flex;
     align-items: center;
     gap: 10px;
 
-    .subject-icon {
+    .grade-icon {
       width: 28px;
       height: 28px;
       border-radius: 6px;
@@ -501,6 +554,13 @@
       color: #111827;
       font-weight: 500;
     }
+  }
+
+  // 状态文本
+  .status-text {
+    margin-left: 8px;
+    font-size: 13px;
+    color: #6b7280;
   }
 
   // 表格操作

@@ -1,13 +1,13 @@
-import request from "./request";
-import axios from "axios";
+import request from './request';
+import axios from 'axios';
 const http = {
   get(url, params) {
     const config = {
-      method: "get",
+      method: 'get',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/json;charset=UTF-8",
+        'Content-Type': 'application/json;charset=UTF-8',
       },
     };
     if (params) {
@@ -17,13 +17,13 @@ const http = {
   },
   getFile(url, params) {
     const config = {
-      method: "get",
+      method: 'get',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      responseType: "blob", // 关键：必须设置
+      responseType: 'blob', // 关键：必须设置
     };
     if (params) {
       config.params = params;
@@ -32,11 +32,25 @@ const http = {
   },
   post(url, params) {
     const config = {
-      method: "post",
+      method: 'post',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/json;charset=UTF-8",
+        'Content-Type': 'application/json;charset=UTF-8',
+      },
+    };
+    if (params) {
+      config.data = params;
+    }
+    return request(config);
+  },
+  postFile(url, params) {
+    const config = {
+      method: 'post',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
     };
     if (params) {
@@ -46,11 +60,11 @@ const http = {
   },
   put(url, params) {
     const config = {
-      method: "put",
+      method: 'put',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
     };
     if (params) {
@@ -60,11 +74,11 @@ const http = {
   },
   put2(url, params) {
     const config = {
-      method: "put",
+      method: 'put',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/json;charset=UTF-8",
+        'Content-Type': 'application/json;charset=UTF-8',
       },
     };
     if (params) {
@@ -74,11 +88,11 @@ const http = {
   },
   delete(url, params) {
     const config = {
-      method: "delete",
+      method: 'delete',
       url: url,
-      urlType: "businessURL",
+      urlType: 'businessURL',
       headers: {
-        "Content-Type": "application/json;charset=UTF-8",
+        'Content-Type': 'application/json;charset=UTF-8',
       },
     };
     if (params) {
