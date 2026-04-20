@@ -18,11 +18,11 @@
       <div class="form-section">
         <div class="section-title">基本信息</div>
         <div class="form-row">
-          <el-form-item label="姓名" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入姓名" maxlength="20" />
+          <el-form-item label="姓名" prop="studentName">
+            <el-input v-model="formData.studentName" placeholder="请输入姓名" maxlength="20" />
           </el-form-item>
-          <el-form-item label="学号" prop="studentNo">
-            <el-input v-model="formData.studentNo" placeholder="请输入学号" maxlength="20" />
+          <el-form-item label="学号" prop="studentCode">
+            <el-input v-model="formData.studentCode" placeholder="请输入学号" maxlength="20" />
           </el-form-item>
         </div>
         <div class="form-row">
@@ -56,33 +56,21 @@
       <div class="form-section">
         <div class="section-title">组织信息</div>
         <div class="form-row">
-          <el-form-item label="所属学院" prop="collegeId">
-            <el-select v-model="formData.collegeId" placeholder="请选择学院">
-              <el-option label="小学" :value="1" />
-              <el-option label="初中" :value="2" />
-              <el-option label="高中" :value="3" />
+          <el-form-item label="所属学段" prop="stageId">
+            <el-select v-model="formData.stageId" placeholder="请选择学段">
+              <el-option v-for="stage in stageList" :key="stage.id" :label="stage.stageName" :value="stage.id" />
             </el-select>
           </el-form-item>
           <el-form-item label="所属年级" prop="gradeId">
             <el-select v-model="formData.gradeId" placeholder="请选择年级">
-              <el-option label="一年级" :value="1" />
-              <el-option label="二年级" :value="2" />
-              <el-option label="三年级" :value="3" />
-              <el-option label="初一年级" :value="4" />
-              <el-option label="初二年级" :value="5" />
-              <el-option label="高一年级" :value="6" />
-              <el-option label="高二年级" :value="7" />
+              <el-option v-for="grade in gradeList" :key="grade.id" :label="grade.gradeName" :value="grade.id" />
             </el-select>
           </el-form-item>
         </div>
         <div class="form-row">
           <el-form-item label="所属班级" prop="classId">
             <el-select v-model="formData.classId" placeholder="请选择班级">
-              <el-option label="1班" :value="1" />
-              <el-option label="2班" :value="2" />
-              <el-option label="3班" :value="3" />
-              <el-option label="4班" :value="4" />
-              <el-option label="5班" :value="5" />
+              <el-option v-for="cls in classList" :key="cls.id" :label="cls.className" :value="cls.id" />
             </el-select>
           </el-form-item>
         </div>
@@ -96,8 +84,7 @@
             <el-select v-model="formData.status" placeholder="请选择状态">
               <el-option label="在读" :value="1" />
               <el-option label="休学" :value="2" />
-              <el-option label="退学" :value="3" />
-              <el-option label="毕业" :value="4" />
+              <el-option label="毕业" :value="3" />
             </el-select>
           </el-form-item>
           <el-form-item label="入学年份" prop="enrollmentYear">
@@ -127,6 +114,10 @@
 </template>
 
 <script>
+import baseApi from '@/api/base.js';
+import gradeApi from '@/api/grade.js';
+import classApi from '@/api/class.js';
+
 export default {
   name: 'StudentDialog',
   props: {
@@ -146,14 +137,17 @@ export default {
   data() {
     return {
       dialogVisible: this.visible,
+      stageList: [],
+      gradeList: [],
+      classList: [],
       formData: {
-        name: '',
-        studentNo: '',
+        studentName: '',
+        studentCode: '',
         gender: 1,
         birthDate: '',
         parentPhone: '',
         parentName: '',
-        collegeId: '',
+        stageId: '',
         gradeId: '',
         classId: '',
         status: 1,
@@ -161,11 +155,11 @@ export default {
         remark: '',
       },
       rules: {
-        name: [
+        studentName: [
           { required: true, message: '请输入姓名', trigger: 'blur' },
           { min: 2, max: 20, message: '姓名长度在 2 到 20 个字符', trigger: 'blur' },
         ],
-        studentNo: [
+        studentCode: [
           { required: true, message: '请输入学号', trigger: 'blur' },
           { min: 2, max: 20, message: '学号长度在 2 到 20 个字符', trigger: 'blur' },
         ],
@@ -176,7 +170,7 @@ export default {
           { required: true, message: '请输入家长手机号', trigger: 'blur' },
           { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
         ],
-        collegeId: [
+        stageId: [
           { required: true, message: '请选择所属学院', trigger: 'change' },
         ],
         gradeId: [
@@ -205,12 +199,72 @@ export default {
         }
       },
     },
+    'formData.stageId': {
+      handler(val) {
+        if (val) {
+          this.loadGradeList(val);
+        } else {
+          this.gradeList = [];
+          this.classList = [];
+        }
+        this.formData.gradeId = '';
+        this.formData.classId = '';
+      },
+    },
+    'formData.gradeId': {
+      handler(val) {
+        if (val) {
+          this.loadClassList(val);
+        } else {
+          this.classList = [];
+        }
+        this.formData.classId = '';
+      },
+    },
+  },
+  mounted() {
+    this.loadStageList();
   },
   methods: {
-    // 初始化表单
+    async loadStageList() {
+      try {
+        const res = await baseApi.stageList();
+        if (res.code === 200) {
+          this.stageList = res.data || [];
+        }
+      } catch (error) {
+        console.error('加载学段列表失败:', error);
+      }
+    },
+    async loadGradeList(stageId) {
+      try {
+        const res = await gradeApi.list({ stageId });
+        if (res.code === 200) {
+          this.gradeList = res.data || [];
+        }
+      } catch (error) {
+        console.error('加载年级列表失败:', error);
+      }
+    },
+    async loadClassList(gradeId) {
+      try {
+        const res = await classApi.list({ gradeId });
+        if (res.code === 200) {
+          this.classList = res.data || [];
+        }
+      } catch (error) {
+        console.error('加载班级列表失败:', error);
+      }
+    },
     initForm() {
       if (this.editData) {
         this.formData = { ...this.editData };
+        if (this.editData.stageId) {
+          this.loadGradeList(this.editData.stageId);
+        }
+        if (this.editData.gradeId) {
+          this.loadClassList(this.editData.gradeId);
+        }
       } else {
         this.resetForm();
       }
@@ -218,13 +272,13 @@ export default {
     // 重置表单
     resetForm() {
       this.formData = {
-        name: '',
-        studentNo: '',
+        studentName: '',
+        studentCode: '',
         gender: 1,
         birthDate: '',
         parentPhone: '',
         parentName: '',
-        collegeId: '',
+        stageId: '',
         gradeId: '',
         classId: '',
         status: 1,

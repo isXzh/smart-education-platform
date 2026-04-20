@@ -52,6 +52,37 @@ const http = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      responseType: 'blob',
+    };
+    if (params) {
+      config.data = params;
+    }
+    return request(config);
+  },
+  postImport(url, params) {
+    const config = {
+      method: 'post',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8',
+      },
+      responseType: 'blob',
+    };
+    if (params) {
+      config.data = params;
+    }
+    return request(config);
+  },
+  postJsonFile(url, params) {
+    const config = {
+      method: 'post',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8',
+      },
+      responseType: 'blob',
     };
     if (params) {
       config.data = params;
@@ -97,6 +128,20 @@ const http = {
     };
     if (params) {
       config.params = params;
+    }
+    return request(config);
+  },
+  deleteData(url, params) {
+    const config = {
+      method: 'delete',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'application/json;charset=UTF-8',
+      },
+    };
+    if (params) {
+      config.data = params;
     }
     return request(config);
   },

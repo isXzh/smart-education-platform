@@ -174,10 +174,11 @@
             expanded: true,
             children: [
               { path: '/Information-base-info', title: '组织架构' },
-              { path: '/Information-class-period', title: '课时管理' },
               { path: '/Information-subject-management', title: '学科管理' },
               { path: '/Information-subject-grades', title: '年级管理' },
+              { path: '/Information-subject-classes', title: '班级管理' },
               { path: '/Information-subject-personnel', title: '人员管理' },
+              { path: '/Information-class-period', title: '课时管理' },
               { path: '/Information-subject-course', title: '课程管理' },
             ],
           },

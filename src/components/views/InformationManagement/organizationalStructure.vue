@@ -160,7 +160,7 @@
           </div>
 
           <!-- 统计卡片 -->
-          <div class="stats-row">
+          <!-- <div class="stats-row">
             <div class="stat-card">
               <div class="stat-label">学生数量</div>
               <div class="stat-value blue">
@@ -179,7 +179,7 @@
                 {{ currentOrg.children.length || 0 }}
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- 下级组织列表 -->
           <div class="sub-org-section">

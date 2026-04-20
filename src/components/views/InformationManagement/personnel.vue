@@ -28,15 +28,19 @@
             <i class="el-icon-plus"></i>
             新增{{ activeTab === 'teacher' ? '教师' : '学生' }}
           </el-button>
-          <el-button class="batch-import-btn">
+          <el-button class="batch-import-btn" @click="handleDownloadTemplate">
+            <i class="el-icon-upload2"></i>
+            下载导入模板
+          </el-button>
+          <el-button class="batch-import-btn" @click="handleBatchImport">
             <i class="el-icon-upload2"></i>
             批量导入
           </el-button>
-          <el-button class="export-btn">
+          <el-button class="export-btn" @click="handleExport">
             <i class="el-icon-download"></i>
             导出
           </el-button>
-          <el-button class="delete-btn" :disabled="selectedIds.length === 0">
+          <el-button class="delete-btn" :disabled="selectedIds.length === 0" @click="handleBatchDelete">
             <i class="el-icon-delete"></i>
             删除
           </el-button>
@@ -49,21 +53,36 @@
             prefix-icon="el-icon-search"
             class="search-input"
             clearable
+            @change="handleSearchChange"
           />
-          <el-select v-model="statusFilter" placeholder="全部状态" class="status-select" clearable>
+          <el-select
+            v-model="statusFilter"
+            placeholder="全部状态"
+            class="status-select"
+            clearable
+            @change="handleStatusChange"
+          >
             <el-option label="全部状态" value="" />
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <template v-if="activeTab === 'teacher'">
+              <el-option label="启用" :value="1" />
+              <el-option label="禁用" :value="0" />
+            </template>
+            <template v-else>
+              <el-option label="在读" :value="1" />
+              <el-option label="休学" :value="2" />
+              <el-option label="毕业" :value="3" />
+            </template>
           </el-select>
           <el-select
             v-if="activeTab === 'teacher'"
-            v-model="orgFilter"
-            placeholder="全部组织"
+            v-model="stageFilter"
+            placeholder="选段"
             class="org-select"
             clearable
+            @change="handleStageChange"
           >
-            <el-option label="全部组织" value="" />
-            <el-option v-for="org in organizationList" :key="org.id" :label="org.name" :value="org.id" />
+            <el-option label="全部学段" value="" />
+            <el-option v-for="stage in stageList" :key="stage.id" :label="stage.stageName" :value="stage.id" />
           </el-select>
           <el-select
             v-if="activeTab === 'student'"
@@ -71,6 +90,7 @@
             placeholder="全部年级"
             class="grade-select"
             clearable
+            @change="handleGradeChange"
           >
             <el-option label="全部年级" value="" />
             <el-option v-for="grade in gradeList" :key="grade.id" :label="grade.gradeName" :value="grade.id" />
@@ -95,17 +115,21 @@
           <template v-if="activeTab === 'teacher'">
             <el-table-column label="姓名" min-width="100">
               <template #default="{ row }">
-                <span class="name-text">{{ row.name }}</span>
+                <span class="name-text">{{ row.teacherName }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="employeeNo" label="工号" min-width="120" />
+            <el-table-column prop="teacherCode" label="工号" min-width="120" />
             <el-table-column label="性别" min-width="80" align="center">
               <template #default="{ row }">
                 <span>{{ row.gender === 1 ? '男' : '女' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="collegeName" label="所属学段" min-width="120" />
-            <el-table-column prop="organizationName" label="所属组织" min-width="120" />
+            <el-table-column label="所属学段" min-width="120">
+              <template #default="{ row }">
+                <span>{{ stageMap[row.stageId] || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="orgNamePath" label="所属组织" min-width="120" />
             <el-table-column prop="phone" label="手机号" min-width="120" />
           </template>
 
@@ -113,16 +137,20 @@
           <template v-else>
             <el-table-column label="姓名" min-width="100">
               <template #default="{ row }">
-                <span class="name-text">{{ row.name }}</span>
+                <span class="name-text">{{ row.studentName }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="studentNo" label="学号" min-width="120" />
+            <el-table-column prop="studentCode" label="学号" min-width="120" />
             <el-table-column label="性别" min-width="80" align="center">
               <template #default="{ row }">
                 <span>{{ row.gender === 1 ? '男' : '女' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="collegeName" label="所属学院" min-width="120" />
+            <el-table-column label="所属学段" min-width="120">
+              <template #default="{ row }">
+                <span>{{ stageMap[row.stageId] || '-' }}</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="gradeName" label="所属年级" min-width="100" />
             <el-table-column prop="className" label="所属班级" min-width="200" />
             <el-table-column prop="parentPhone" label="家长手机" min-width="120" />
@@ -131,8 +159,8 @@
           <!-- 公共列 -->
           <el-table-column label="状态" min-width="100" align="center">
             <template #default="{ row }">
-              <el-tag size="small" :type="row.status === 1 ? 'success' : 'info'" effect="light">
-                {{ row.status === 1 ? '启用' : '禁用' }}
+              <el-tag size="small" :type="getStatusType(row.status)" effect="light">
+                {{ getStatusText(row.status) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -144,11 +172,11 @@
                   <i class="el-icon-edit"></i>
                   编辑
                 </el-button>
-                <el-button type="text" size="small" class="reset-btn" @click="resetPassword">
+                <el-button type="text" size="small" class="reset-btn" @click="resetPassword(row)">
                   <i class="el-icon-refresh-left"></i>
                   重置密码
                 </el-button>
-                <el-button type="text" size="small" class="delete-btn">
+                <el-button type="text" size="small" class="delete-btn" @click="handleDelete(row.id)">
                   <i class="el-icon-delete"></i>
                   删除
                 </el-button>
@@ -197,77 +225,12 @@
 <script>
   import TeacherDialog from './dialog/TeacherDialog.vue';
   import StudentDialog from './dialog/StudentDialog.vue';
-
-  // 静态模拟数据
-  const mockTeacherData = [
-    {
-      id: 1,
-      name: '张明',
-      employeeNo: 'T2024001',
-      gender: 1,
-      collegeName: '小学',
-      organizationName: '小学部',
-      phone: '138****0000',
-      status: 1,
-    },
-    {
-      id: 2,
-      name: '李芳',
-      employeeNo: 'T2024002',
-      gender: 0,
-      collegeName: '初中',
-      organizationName: '初中部',
-      phone: '139****1111',
-      status: 1,
-    },
-    {
-      id: 3,
-      name: '王强',
-      employeeNo: 'T2024003',
-      gender: 1,
-      collegeName: '高中',
-      organizationName: '高中部',
-      phone: '137****2222',
-      status: 0,
-    },
-  ];
-
-  const mockStudentData = [
-    {
-      id: 1,
-      name: '李小红',
-      studentNo: 'S202400123',
-      gender: 0,
-      collegeName: '初中',
-      gradeName: '初一年级',
-      className: '初一（2）班',
-      parentPhone: '139****1111',
-      status: 1,
-    },
-    {
-      id: 2,
-      name: '陈浩',
-      studentNo: 'S202400124',
-      gender: 1,
-      collegeName: '小学',
-      gradeName: '三年级',
-      className: '301班',
-      parentPhone: '138****3333',
-      status: 1,
-    },
-    {
-      id: 3,
-      name: '刘洋',
-      studentNo: 'S202400125',
-      gender: 0,
-      collegeName: '高中',
-      gradeName: '高一年级',
-      className: '高一（1）班',
-      parentPhone: '136****4444',
-      status: 2,
-    },
-  ];
-
+  import teacherApi from '@/api/teacher.js';
+  import studentApi from '@/api/student.js';
+  import gradeApi from '@/api/grade.js';
+  import classApi from '@/api/class.js';
+  import baseApi from '@/api/base.js';
+  import orgStructureApi from '@/api/orgStructure.js';
   export default {
     name: 'PersonnelManagement',
     components: {
@@ -282,29 +245,21 @@
         // 搜索筛选
         searchKeyword: '',
         statusFilter: '',
-        orgFilter: '',
+        stageFilter: '',
         gradeFilter: '',
 
         // 分页
         currentPage: 1,
         pageSize: 10,
-        total: 3,
+        total: 0,
+
+        // 数据列表
+        teacherList: [],
+        studentList: [],
 
         // 筛选列表
-        organizationList: [
-          { id: 1, name: '小学部' },
-          { id: 2, name: '初中部' },
-          { id: 3, name: '高中部' },
-        ],
-        gradeList: [
-          { id: 1, gradeName: '一年级' },
-          { id: 2, gradeName: '二年级' },
-          { id: 3, gradeName: '三年级' },
-          { id: 4, gradeName: '初一年级' },
-          { id: 5, gradeName: '初二年级' },
-          { id: 6, gradeName: '高一年级' },
-          { id: 7, gradeName: '高二年级' },
-        ],
+        stageList: [],
+        gradeList: [],
 
         // 选中项
         selectedIds: [],
@@ -314,34 +269,238 @@
         studentDialogVisible: false,
         dialogTitle: '',
         editData: null,
+
+        // 加载状态
+        loading: false,
       };
     },
     computed: {
-      // 根据当前Tab返回对应的静态数据
       tableData() {
-        return this.activeTab === 'teacher' ? mockTeacherData : mockStudentData;
+        return this.activeTab === 'teacher' ? this.teacherList : this.studentList;
+      },
+      stageMap() {
+        const map = {};
+        this.stageList.forEach(stage => {
+          map[stage.id] = stage.stageName;
+        });
+        return map;
       },
     },
+    mounted() {
+      this.loadStageList();
+      this.loadGradeList();
+      this.loadTeacherList();
+    },
     methods: {
-      resetPassword() {
+      async loadStageList() {
+        try {
+          const res = await baseApi.stageList();
+          if (res.code === 200) {
+            this.stageList = res.data || [];
+          }
+        } catch (error) {
+          console.error('加载学段列表失败:', error);
+        }
+      },
+      async loadGradeList() {
+        try {
+          const res = await gradeApi.list();
+          if (res.code === 200) {
+            this.gradeList = res.data || [];
+          }
+        } catch (error) {
+          console.error('加载年级列表失败:', error);
+        }
+      },
+      async loadTeacherList() {
+        this.loading = true;
+        try {
+          const params = {
+            pageNum: this.currentPage,
+            pageSize: this.pageSize,
+            keyword: this.searchKeyword,
+            status: this.statusFilter,
+            stageId: this.stageFilter,
+          };
+          const res = await teacherApi.page(params);
+          if (res.code === 200) {
+            this.teacherList = res.data.list || [];
+            this.total = res.data.total || 0;
+          }
+        } catch (error) {
+          console.error('加载教师列表失败:', error);
+          this.$message.error('加载教师列表失败');
+        } finally {
+          this.loading = false;
+        }
+      },
+      async loadStudentList() {
+        this.loading = true;
+        try {
+          const params = {
+            pageNum: this.currentPage,
+            pageSize: this.pageSize,
+            keyword: this.searchKeyword,
+            status: this.statusFilter,
+            gradeId: this.gradeFilter,
+          };
+          const res = await studentApi.page(params);
+          if (res.code === 200) {
+            this.studentList = res.data.list || [];
+            this.total = res.data.total || 0;
+          }
+        } catch (error) {
+          console.error('加载学生列表失败:', error);
+          this.$message.error('加载学生列表失败');
+        } finally {
+          this.loading = false;
+        }
+      },
+      async handleDownloadTemplate() {
+        try {
+          const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+          const blob = await api.downloadTemplate();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${this.activeTab === 'teacher' ? '教师' : '学生'}导入模板.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.$message.success('模板下载成功');
+        } catch (error) {
+          console.error('下载模板失败:', error);
+          this.$message.error('下载模板失败');
+        }
+      },
+      async handleBatchImport() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls';
+        input.onchange = async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+            const res = await api.import(formData);
+            if (res.code === 200) {
+              this.$message.success('导入成功');
+              if (this.activeTab === 'teacher') {
+                this.loadTeacherList();
+              } else {
+                this.loadStudentList();
+              }
+            }
+          } catch (error) {
+            console.error('导入失败:', error);
+            this.$message.error('导入失败');
+          }
+        };
+        input.click();
+      },
+      async handleExport() {
+        if (this.selectedIds.length === 0) {
+          this.$message.warning('请选择要导出的数据');
+          return;
+        }
+        try {
+          const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+          const blob = await api.export(this.selectedIds);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${this.activeTab === 'teacher' ? '教师' : '学生'}数据.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.$message.success('导出成功');
+        } catch (error) {
+          console.error('导出失败:', error);
+          this.$message.error('导出失败');
+        }
+      },
+      async handleDelete(id) {
+        this.$confirm('确认删除该数据?', '删除', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+          .then(async () => {
+            try {
+              const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+              let arr = [];
+              arr.push(id);
+              const res = await api.delete(arr);
+              if (res.code === 200) {
+                this.$message.success('删除成功');
+                if (this.activeTab === 'teacher') {
+                  this.loadTeacherList();
+                } else {
+                  this.loadStudentList();
+                }
+              }
+            } catch (error) {
+              console.error('删除失败:', error);
+              this.$message.error('删除失败');
+            }
+          })
+          .catch(() => {});
+      },
+      async handleBatchDelete() {
+        if (this.selectedIds.length === 0) {
+          this.$message.warning('请选择要删除的数据');
+          return;
+        }
+        this.$confirm(`确认删除选中的 ${this.selectedIds.length} 条数据?`, '批量删除', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+          .then(async () => {
+            try {
+              const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+              const promises = this.selectedIds.map(id => api.delete(id));
+              const res = await api.delete([...this.selectedIds]);
+              if (res.code === 200) {
+                this.$message.success('批量删除成功');
+              }
+              this.selectedIds = [];
+              if (this.activeTab === 'teacher') {
+                this.loadTeacherList();
+              } else {
+                this.loadStudentList();
+              }
+            } catch (error) {
+              console.error('批量删除失败:', error);
+              this.$message.error('批量删除失败');
+            }
+          })
+          .catch(() => {});
+      },
+      async resetPassword(row) {
         this.$confirm('确认重置密码，重置后密码为123456?', '重置密码', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning',
           confirmButtonClass: 'confirm-reset-btn',
         })
-          .then(() => {
-            this.$message({
-              type: 'success',
-              message: '重置密码成功!',
-            });
+          .then(async () => {
+            try {
+              const api = this.activeTab === 'teacher' ? teacherApi : studentApi;
+              const res = await api.resetPassword(row.id);
+              if (res.code === 200) {
+                this.$message.success('重置密码成功');
+              }
+            } catch (error) {
+              console.error('重置密码失败:', error);
+              this.$message.error('重置密码失败');
+            }
           })
-          .catch(() => {
-            this.$message({
-              type: 'info',
-              message: '已取消重置密码',
-            });
-          });
+          .catch(() => {});
       },
 
       handleAdd() {
@@ -367,27 +526,93 @@
           this.studentDialogVisible = true;
         }
       },
-      // Tab 切换
       handleTabChange(tab) {
         if (this.activeTab === tab) return;
         this.activeTab = tab;
         this.currentPage = 1;
         this.searchKeyword = '';
         this.statusFilter = '';
-        this.orgFilter = '';
+        this.stageFilter = '';
         this.gradeFilter = '';
         this.selectedIds = [];
+        if (tab === 'teacher') {
+          this.loadTeacherList();
+        } else {
+          this.loadStudentList();
+        }
       },
 
-      // 分页切换
       handleCurrentChange(page) {
         this.currentPage = page;
+        if (this.activeTab === 'teacher') {
+          this.loadTeacherList();
+        } else {
+          this.loadStudentList();
+        }
       },
 
-      // 每页条数变化
       handleSizeChange(size) {
         this.pageSize = size;
         this.currentPage = 1;
+        if (this.activeTab === 'teacher') {
+          this.loadTeacherList();
+        } else {
+          this.loadStudentList();
+        }
+      },
+
+      handleSearchChange() {
+        this.currentPage = 1;
+        if (this.activeTab === 'teacher') {
+          this.loadTeacherList();
+        } else {
+          this.loadStudentList();
+        }
+      },
+
+      handleStatusChange() {
+        this.currentPage = 1;
+        if (this.activeTab === 'teacher') {
+          this.loadTeacherList();
+        } else {
+          this.loadStudentList();
+        }
+      },
+
+      handleStageChange() {
+        this.currentPage = 1;
+        this.loadTeacherList();
+      },
+
+      handleGradeChange() {
+        this.currentPage = 1;
+        this.loadStudentList();
+      },
+
+      getStatusText(status) {
+        if (this.activeTab === 'teacher') {
+          return status === 1 ? '在职' : '离职';
+        } else {
+          const statusMap = {
+            1: '在读',
+            2: '休学',
+            3: '毕业',
+          };
+          return statusMap[status] || '-';
+        }
+      },
+
+      getStatusType(status) {
+        if (this.activeTab === 'teacher') {
+          return status === 1 ? 'success' : 'info';
+        } else {
+          const typeMap = {
+            1: 'success',
+            2: 'warning',
+            3: 'info',
+          };
+          return typeMap[status] || 'info';
+        }
       },
 
       // 表格选择
@@ -412,12 +637,45 @@
         };
       },
 
-      // 弹窗确认
-      handleDialogConfirm(formData) {
-        console.log('弹窗确认:', formData);
-        this.teacherDialogVisible = false;
-        this.studentDialogVisible = false;
-        // TODO: 调用保存API
+      async handleDialogConfirm(formData) {
+        try {
+          if (this.activeTab === 'teacher') {
+            if (formData.id) {
+              const res = await teacherApi.update(formData.id, formData);
+              if (res.code === 200) {
+                this.$message.success('修改教师成功');
+                this.loadTeacherList();
+              }
+            } else {
+              const res = await teacherApi.add(formData);
+              if (res.code === 200) {
+                this.$message.success('新增教师成功');
+                this.loadTeacherList();
+              } else {
+                this.$message.error(res.message ? res.message : '新增教师失败');
+              }
+            }
+          } else {
+            if (formData.id) {
+              const res = await studentApi.update(formData.id, formData);
+              if (res.code === 200) {
+                this.$message.success('修改学生成功');
+                this.loadStudentList();
+              }
+            } else {
+              const res = await studentApi.add(formData);
+              if (res.code === 200) {
+                this.$message.success('新增学生成功');
+                this.loadStudentList();
+              }
+            }
+          }
+          this.teacherDialogVisible = false;
+          this.studentDialogVisible = false;
+        } catch (error) {
+          console.error('保存失败:', error);
+          this.$message.error('保存失败');
+        }
       },
     },
   };
@@ -662,6 +920,15 @@
 
       .el-table__empty-block {
         padding: 40px 0;
+      }
+
+      .el-table__column--selection {
+        .cell {
+          display: block;
+          text-align: center;
+          padding: 0;
+          line-height: normal;
+        }
       }
     }
   }

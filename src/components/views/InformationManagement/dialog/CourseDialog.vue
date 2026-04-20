@@ -50,8 +50,7 @@
       </el-form-item>
 
       <!-- 课时时长 -->
-      <el-form-item label="课时时长" prop="selectedPeriods" class="form-item-required shichang-item">
-        <!-- 已选择的课时标签 -->
+      <!-- <el-form-item label="课时时长" prop="selectedPeriods" class="form-item-required shichang-item">
         <div v-if="formData.selectedPeriods.length > 0" class="selected-tags">
           <el-tag
             v-for="(period, index) in formData.selectedPeriods"
@@ -65,7 +64,6 @@
           </el-tag>
         </div>
 
-        <!-- 提示信息 -->
         <div v-if="!formData.gradeLevel" class="period-placeholder">
           <div class="placeholder-text">
             <i class="el-icon-warning-outline" />
@@ -75,7 +73,6 @@
           <div class="placeholder-sub">请先选择学段以加载对应的课时时列表</div>
         </div>
 
-        <!-- 课时选择列表 -->
         <div v-else class="period-list">
           <div class="period-list-header">
             <span>已选择 {{ formData.selectedPeriods.length }} 个课时</span>
@@ -95,7 +92,7 @@
         </div>
 
         <div class="form-tip">从课时管理中选择该课程包含的课时，可多选</div>
-      </el-form-item>
+      </el-form-item> -->
 
       <!-- 状态 -->
       <el-form-item label="状态" prop="status" class="form-item-required">
@@ -150,7 +147,7 @@
           subject: '',
           gradeLevel: '',
           courseCode: '',
-          selectedPeriods: [],
+          // selectedPeriods: [],
           status: '启用',
           description: '',
         },
@@ -161,7 +158,7 @@
           ],
           subject: [{ required: true, message: '请选择所属学科', trigger: 'change' }],
           gradeLevel: [{ required: true, message: '请选择学段', trigger: 'change' }],
-          selectedPeriods: [{ type: 'array', required: true, message: '请至少选择一个课时', trigger: 'change' }],
+          // selectedPeriods: [{ type: 'array', required: true, message: '请至少选择一个课时', trigger: 'change' }],
           status: [{ required: true, message: '请选择状态', trigger: 'change' }],
         },
         subjectOptions: [
@@ -254,7 +251,7 @@
             subject: this.editData.subject || '',
             gradeLevel: this.editData.gradeLevel || '',
             courseCode: this.editData.courseCode || '',
-            selectedPeriods: this.editData.selectedPeriods || [],
+            // selectedPeriods: this.editData.selectedPeriods || [],
             status: this.editData.status || '启用',
             description: this.editData.description || '',
           };
@@ -264,7 +261,7 @@
             subject: '',
             gradeLevel: '',
             courseCode: '',
-            selectedPeriods: [],
+            // selectedPeriods: [],
             status: '启用',
             description: '',
           };
@@ -338,10 +335,10 @@
       handleSubmit() {
         this.$refs.courseForm.validate(valid => {
           if (valid) {
-            if (this.formData.selectedPeriods.length === 0) {
-              this.$message.warning('请至少选择一个课时');
-              return;
-            }
+            // if (this.formData.selectedPeriods.length === 0) {
+            //   this.$message.warning('请至少选择一个课时');
+            //   return;
+            // }
             this.$emit('submit', { ...this.formData });
             this.dialogVisible = false;
           }

@@ -12,6 +12,7 @@ import SubjectManagement from '@/components/views/InformationManagement/subjectM
 import Course from '@/components/views/InformationManagement/course.vue';
 import Personnel from '@/components/views/InformationManagement/personnel.vue';
 import Grades from '@/components/views/InformationManagement/grades.vue';
+import Classes from '@/components/views/InformationManagement/classes.vue';
 import SystemManagement from '@/components/views/systemManagement/index.vue';
 import AccountManagement from '@/components/views/systemManagement/AccountManagement.vue';
 import RolePermission from '@/components/views/systemManagement/RolePermission.vue';
@@ -79,6 +80,12 @@ const routes = [
         path: 'Information-subject-management',
         name: 'Information-subject-management',
         component: SubjectManagement,
+      },
+      // 基础信息管理-班级管理
+      {
+        path: 'Information-subject-classes',
+        name: 'Information-subject-classes',
+        component: Classes,
       },
       // 基础信息管理-年级管理
       {

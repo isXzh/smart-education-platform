@@ -98,7 +98,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="model" label="设备型号" width="120"></el-table-column>
-          <el-table-column prop="sn" label="SN码" width="120">
+          <el-table-column prop="sn" label="SIP码" width="120">
             <template slot-scope="scope">
               <span class="sn-code">{{ scope.row.sn }}</span>
             </template>
@@ -113,7 +113,7 @@
           </el-table-column>
           <el-table-column prop="expiryDate" label="到期时间" width="110"></el-table-column>
           <el-table-column prop="activationDate" label="激活时间" width="110"></el-table-column>
-          <el-table-column label="操作" width="140" fixed="right">
+          <!-- <el-table-column label="操作" width="140" fixed="right">
             <template slot-scope="scope">
               <div class="operation-btns">
                 <el-button size="mini" type="text" @click="handleEdit(scope.row)" title="编辑">
@@ -127,7 +127,7 @@
                 </el-button>
               </div>
             </template>
-          </el-table-column>
+          </el-table-column> -->
         </el-table>
 
         <!-- 分页 -->
