@@ -341,7 +341,8 @@
   /* 侧边栏 */
   .sidebar {
     width: 220px;
-    background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
+    // background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
+    background: #3165D2;
     display: flex;
     flex-direction: column;
     padding: 16px 0;
@@ -394,6 +395,7 @@
 
           .menu-title {
             display: none;
+            color:#fff;
           }
         }
       }
@@ -491,6 +493,7 @@
               font-size: 14px;
               white-space: nowrap;
               flex: 1;
+              color:#fff;
             }
 
             .expand-icon {
@@ -515,7 +518,7 @@
         .submenu {
           display: flex;
           flex-direction: column;
-          padding-left: 32px;
+          // padding-left: 32px;
           animation: slideDown 0.3s ease;
 
           @keyframes slideDown {
@@ -535,10 +538,13 @@
               padding: 0 12px;
               border-radius: 6px;
               margin-top: 2px;
-
+                  display: flex;
+    align-items: center;
+    justify-content: center;
               .menu-title {
                 font-size: 14px;
                 white-space: nowrap;
+                color:#fff;
               }
 
               &:hover {
@@ -547,8 +553,13 @@
               }
 
               &.active {
-                background: #4f7cff;
-                color: #fff;
+                // background: #4f7cff;
+                // color: #fff;
+                background: white;
+    color: #3165D2;
+    .menu-title {
+      color: #3165D2;
+    }
               }
             }
           }

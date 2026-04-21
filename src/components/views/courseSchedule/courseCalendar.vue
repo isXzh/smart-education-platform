@@ -29,6 +29,20 @@
           <span class="stats-tag green">共 156 节课</span>
         </div>
         <div class="toolbar-right">
+          <el-select
+            v-model="selectedGradeLevel"
+            placeholder="请选择学段"
+            size="small"
+            style="width: 140px; margin-right: 12px"
+            @change="handleGradeLevelChange"
+          >
+            <el-option
+              v-for="item in gradeLevelList"
+              :key="item.id"
+              :label="item.stageName"
+              :value="item.id"
+            ></el-option>
+          </el-select>
           <button class="today-btn" @click="goToday">
             <i class="el-icon-refresh"></i>
             返回今日
@@ -119,7 +133,7 @@
         </div>
         <ul class="tips-list">
           <li>
-            点击有排课的日期可跳转到课表视图的日视图，查看该日详细课程安排
+            点击有排课的日期可跳转到课表视图的周视图，查看该周详细课程安排
           </li>
           <li>鼠标悬浮在日期上可查看该日的校内/校外课程数量统计</li>
           <li>标签颜色深浅代表排课密度，颜色越深表示课程越多</li>
@@ -131,48 +145,25 @@
 </template>
 
 <script>
+import gradeLevel from "@/api/gradeLevel";
+import schedule from "@/api/schedule";
+
 export default {
   name: "CourseCalendar",
   data() {
     return {
       currentDate: new Date(),
       weekDays: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
-      // 模拟课程数据
-      courseData: {
-        "2026-04-01": [
-          { type: "校内", name: "数学" },
-          { type: "校内", name: "语文" },
-          { type: "校内", name: "英语" },
-          { type: "校外", name: "美术" },
-        ],
-        "2026-04-02": [
-          { type: "校内", name: "物理" },
-          { type: "校内", name: "化学" },
-          { type: "校内", name: "生物" },
-          { type: "校外", name: "音乐" },
-        ],
-        "2026-04-03": [
-          { type: "校内", name: "历史" },
-          { type: "校内", name: "地理" },
-          { type: "校外", name: "体育" },
-        ],
-        "2026-04-07": [
-          { type: "校内", name: "数学" },
-          { type: "校内", name: "语文" },
-        ],
-        "2026-04-09": [
-          { type: "校内", name: "英语" },
-          { type: "校内", name: "物理" },
-          { type: "校外", name: "化学" },
-        ],
-        "2026-04-14": [
-          { type: "校内", name: "数学" },
-          { type: "校内", name: "语文" },
-        ],
-        "2026-04-15": [{ type: "校内", name: "英语" }],
-        "2026-04-16": [{ type: "校外", name: "美术" }],
-      },
+      // 学段列表
+      gradeLevelList: [],
+      // 选中的学段
+      selectedGradeLevel: "",
+      // 课程数据（从API获取）
+      courseData: {},
     };
+  },
+  created() {
+    this.fetchGradeLevelList();
   },
   computed: {
     currentYearMonth() {
@@ -239,6 +230,67 @@ export default {
     },
   },
   methods: {
+    // 获取学段列表
+    async fetchGradeLevelList() {
+      try {
+        const res = await gradeLevel.list();
+        this.gradeLevelList = res.data || [];
+        // 如果有学段数据，默认选中第一个
+        if (this.gradeLevelList.length > 0) {
+          this.selectedGradeLevel = this.gradeLevelList[0].id;
+          // 加载排课数据
+          this.fetchScheduleData();
+        }
+      } catch (error) {
+        console.error("获取学段列表失败:", error);
+        this.$message.error("获取学段列表失败");
+      }
+    },
+    // 学段选择变化
+    handleGradeLevelChange() {
+      this.fetchScheduleData();
+    },
+    // 获取排课数据
+    async fetchScheduleData() {
+      if (!this.selectedGradeLevel) {
+        this.courseData = {};
+        return;
+      }
+      try {
+        // 构建查询参数
+        const params = {
+          stageId: this.selectedGradeLevel,
+          lessonDateStart: this.formatDate(
+            new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1)
+          ),
+          lessonDateEnd: this.formatDate(
+            new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0)
+          ),
+          page: 1,
+          pageSize: 1000,
+        };
+        const res = await schedule.page(params);
+        // 处理响应数据，根据 lessonDate 字段分组
+        const records = res.data?.list || [];
+        const courseData = {};
+        records.forEach((record) => {
+          const dateKey = record.lessonDate;
+          if (!courseData[dateKey]) {
+            courseData[dateKey] = [];
+          }
+          // 根据 courseType 或 source 判断是校内还是校外
+          const type = record.source === "external" || record.courseType === "校外" ? "校外" : "校内";
+          courseData[dateKey].push({
+            type: type,
+            name: record.courseName || record.name,
+          });
+        });
+        this.courseData = courseData;
+      } catch (error) {
+        console.error("获取排课数据失败:", error);
+        this.$message.error("获取排课数据失败");
+      }
+    },
     formatDate(date) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -249,14 +301,20 @@ export default {
       const newDate = new Date(this.currentDate);
       newDate.setMonth(newDate.getMonth() - 1);
       this.currentDate = newDate;
+      // 月份切换后重新获取数据
+      this.fetchScheduleData();
     },
     nextMonth() {
       const newDate = new Date(this.currentDate);
       newDate.setMonth(newDate.getMonth() + 1);
       this.currentDate = newDate;
+      // 月份切换后重新获取数据
+      this.fetchScheduleData();
     },
     goToday() {
       this.currentDate = new Date();
+      // 回到今天后重新获取数据
+      this.fetchScheduleData();
     },
     getBadgeClass(count) {
       if (count <= 3) return "light-blue";
@@ -267,11 +325,10 @@ export default {
     handleDayClick(day) {
       if (day.courses.length > 0) {
         console.log("排课日历跳转视图===", day);
-
-        // 跳转到课表视图的日视图
+        // 跳转到课表视图的周视图
         this.$router.push({
           path: "/schedule-view",
-          query: { date: day.fullDate, view: "day" },
+          query: { date: day.fullDate, view: "week" },
         });
       }
     },

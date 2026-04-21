@@ -20,7 +20,7 @@
               v-for="tag in filterTags"
               :key="tag.value"
               :class="['filter-tag', { active: currentTag === tag.value }]"
-              @click="currentTag = tag.value"
+              @click="handleTagChange(tag.value)"
             >
               {{ tag.label }}
               <span
@@ -54,19 +54,16 @@
               class="search-input"
               placeholder="搜索课程名称"
               v-model="searchQuery"
+              @keyup.enter="handleSearch"
             />
           </div>
-          <!-- 筛选标签 -->
-          <!-- <div class="filter-label">
-            <i class="el-icon-s-operation"></i>
-            <span>筛选</span>
-          </div> -->
           <!-- 学科下拉 -->
           <el-select
-            v-model="filterForm.subject"
+            v-model="filterForm.subjectId"
             placeholder="学科"
             class="filter-select"
             clearable
+            @change="handleFilterChange"
           >
             <el-option
               v-for="item in subjectOptions"
@@ -77,13 +74,14 @@
           </el-select>
           <!-- 学段下拉 -->
           <el-select
-            v-model="filterForm.gradeLevel"
+            v-model="filterForm.stageId"
             placeholder="学段"
             class="filter-select"
             clearable
+            @change="handleFilterChange"
           >
             <el-option
-              v-for="item in gradeLevelOptions"
+              v-for="item in stageOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -95,7 +93,7 @@
       <!-- 数据表格 -->
       <div class="table-container">
         <el-table
-          :data="filteredTableData"
+          :data="tableData"
           style="width: 100%"
           :header-cell-style="headerCellStyle"
           :cell-style="cellStyle"
@@ -111,30 +109,30 @@
               <span class="course-code">{{ scope.row.courseCode }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="subject" label="所属学科" width="100">
+          <el-table-column prop="subjectId" label="所属学科" width="100">
             <template slot-scope="scope">
-              <span class="subject-text">{{ scope.row.subject }}</span>
+              <span class="subject-text">{{ getSubjectName(scope.row.subjectId) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="gradeLevel" label="学段" width="80">
+          <el-table-column prop="stageId" label="学段" width="80">
             <template slot-scope="scope">
-              <span class="grade-level">{{ scope.row.gradeLevel }}</span>
+              <span class="grade-level">{{ getStageName(scope.row.stageId) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="classHourName" label="课时名称" min-width="120">
+          <el-table-column prop="creditHours" label="课时数" width="80">
             <template slot-scope="scope">
-              <span class="class-hour">{{ scope.row.classHourName }}</span>
+              <span class="credit-hours">{{ scope.row.creditHours }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="description" label="课程简介" min-width="150" show-overflow-tooltip>
+          <el-table-column prop="courseDesc" label="课程简介" min-width="150" show-overflow-tooltip>
             <template slot-scope="scope">
-              <span class="description">{{ scope.row.description }}</span>
+              <span class="description">{{ scope.row.courseDesc }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="80">
             <template slot-scope="scope">
               <span :class="['status-badge', getStatusClass(scope.row.status)]">
-                {{ scope.row.status }}
+                {{ scope.row.status === 1 ? '启用' : '停用' }}
               </span>
             </template>
           </el-table-column>
@@ -158,16 +156,17 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <div class="pagination-left">
-          显示 1 - {{ filterForm.pageSize }} 条，共 {{ total }} 条
+          显示 {{ (filterForm.pageNum - 1) * filterForm.pageSize + 1 }} - {{ Math.min(filterForm.pageNum * filterForm.pageSize, total) }} 条，共 {{ total }} 条
         </div>
         <el-pagination
           background
-          :current-page="filterForm.currentPage"
+          :current-page="filterForm.pageNum"
           :page-size="filterForm.pageSize"
           :page-sizes="[10, 20, 50]"
           layout="prev, pager, next, jumper"
           :total="total"
           @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
         />
       </div>
     </div>
@@ -184,6 +183,9 @@
 
 <script>
 import CourseDialog from './dialog/CourseDialog.vue'
+import courseApi from '@/api/course.js'
+import subjectApi from '@/api/subject.js'
+import gradeLevelApi from '@/api/gradeLevel.js'
 
 export default {
   name: 'CourseManage',
@@ -195,185 +197,152 @@ export default {
       searchQuery: '',
       currentTag: 'all',
       loading: false,
-      total: 48,
+      total: 0,
       courseDialogVisible: false,
       isEdit: false,
       currentEditData: null,
       filterTags: [
-        { label: '总计', value: 'all', count: 48 },
-        { label: '启用', value: 'active', count: 24 },
-        { label: '停用', value: 'inactive', count: 12 }
+        { label: '总计', value: 'all', count: 0 },
+        { label: '启用', value: 'active', count: 0 },
+        { label: '停用', value: 'inactive', count: 0 }
       ],
-      subjectOptions: [
-        { label: '全部', value: '' },
-        { label: '语文', value: '语文' },
-        { label: '数学', value: '数学' },
-        { label: '英语', value: '英语' },
-        { label: '物理', value: '物理' },
-        { label: '化学', value: '化学' },
-        { label: '生物', value: '生物' },
-        { label: '历史', value: '历史' },
-        { label: '地理', value: '地理' },
-        { label: '政治', value: '政治' },
-        { label: '体育', value: '体育' },
-        { label: '美术', value: '美术' },
-        { label: '音乐', value: '音乐' },
-        { label: '信息技术', value: '信息技术' }
-      ],
-      gradeLevelOptions: [
-        { label: '全部', value: '' },
-        { label: '小学', value: '小学' },
-        { label: '初中', value: '初中' },
-        { label: '高中', value: '高中' }
-      ],
+      subjectOptions: [],
+      stageOptions: [],
       filterForm: {
-        subject: '',
-        gradeLevel: '',
-        currentPage: 1,
+        subjectId: null,
+        stageId: null,
+        pageNum: 1,
         pageSize: 10
       },
-      tableData: [
-        {
-          id: 1,
-          courseName: '语文',
-          courseCode: 'CHN001',
-          subject: '语文',
-          gradeLevel: '小学',
-          classHourName: '小学语文课时',
-          description: '小学语文基础课程，培养学生的阅读理解和写作能力',
-          status: '启用'
-        },
-        {
-          id: 2,
-          courseName: '数学',
-          courseCode: 'MAT001',
-          subject: '数学',
-          gradeLevel: '小学',
-          classHourName: '小学数学课时',
-          description: '小学数学基础课程，培养学生的逻辑思维和计算能力',
-          status: '启用'
-        },
-        {
-          id: 3,
-          courseName: '英语',
-          courseCode: 'ENG001',
-          subject: '英语',
-          gradeLevel: '小学',
-          classHourName: '小学英语课时',
-          description: '小学英语基础课程，培养学生的英语听说读写能力',
-          status: '启用'
-        },
-        {
-          id: 4,
-          courseName: '物理',
-          courseCode: 'PHY001',
-          subject: '物理',
-          gradeLevel: '初中',
-          classHourName: '初中物理课时',
-          description: '初中物理课程，探索自然界的物理规律',
-          status: '启用'
-        },
-        {
-          id: 5,
-          courseName: '化学',
-          courseCode: 'CHE001',
-          subject: '化学',
-          gradeLevel: '初中',
-          classHourName: '初中化学课时',
-          description: '初中化学课程，了解物质的组成和变化',
-          status: '启用'
-        },
-        {
-          id: 6,
-          courseName: '生物',
-          courseCode: 'BIO001',
-          subject: '生物',
-          gradeLevel: '初中',
-          classHourName: '初中生物课时',
-          description: '初中生物课程，探索生命的奥秘',
-          status: '启用'
-        },
-        {
-          id: 7,
-          courseName: '历史',
-          courseCode: 'HIS001',
-          subject: '历史',
-          gradeLevel: '高中',
-          classHourName: '高中历史课时',
-          description: '高中历史课程，了解人类社会发展历程',
-          status: '启用'
-        },
-        {
-          id: 8,
-          courseName: '地理',
-          courseCode: 'GEO001',
-          subject: '地理',
-          gradeLevel: '高中',
-          classHourName: '高中地理课时',
-          description: '高中地理课程，认识地球和地理环境',
-          status: '启用'
-        },
-        {
-          id: 9,
-          courseName: '政治',
-          courseCode: 'POL001',
-          subject: '政治',
-          gradeLevel: '高中',
-          classHourName: '高中政治课时',
-          description: '高中政治课程，培养公民素养',
-          status: '停用'
-        },
-        {
-          id: 10,
-          courseName: '体育',
-          courseCode: 'PE001',
-          subject: '体育',
-          gradeLevel: '小学',
-          classHourName: '小学体育课时',
-          description: '小学体育课程，增强体质',
-          status: '启用'
-        }
-      ]
+      tableData: []
     }
   },
-  computed: {
-    filteredTableData() {
-      let data = [...this.tableData]
-
-      // 快捷筛选
-      if (this.currentTag === 'active') {
-        data = data.filter((item) => item.status === '启用')
-      } else if (this.currentTag === 'inactive') {
-        data = data.filter((item) => item.status === '停用')
-      }
-
-      // 搜索框筛选
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase()
-        data = data.filter(
-          (item) =>
-            item.courseName.toLowerCase().includes(query) ||
-            item.subject.toLowerCase().includes(query) ||
-            item.gradeLevel.toLowerCase().includes(query)
-        )
-      }
-
-      // 学科筛选
-      if (this.filterForm.subject) {
-        data = data.filter((item) => item.subject === this.filterForm.subject)
-      }
-
-      // 学段筛选
-      if (this.filterForm.gradeLevel) {
-        data = data.filter((item) => item.gradeLevel === this.filterForm.gradeLevel)
-      }
-
-      return data
-    }
+  created() {
+    this.loadSubjectOptions()
+    this.loadStageOptions()
+    this.loadCourseList()
   },
   methods: {
+    // 加载学科下拉选项
+    async loadSubjectOptions() {
+      try {
+        const res = await subjectApi.list()
+        if (res.code === 200 && res.data) {
+          this.subjectOptions = res.data.map(item => ({
+            label: item.subjectName,
+            value: item.id
+          }))
+        }
+      } catch (error) {
+        console.error('加载学科列表失败:', error)
+      }
+    },
+    // 加载学段下拉选项
+    async loadStageOptions() {
+      try {
+        const res = await gradeLevelApi.list()
+        if (res.code === 200 && res.data) {
+          this.stageOptions = res.data.map(item => ({
+            label: item.stageName,
+            value: item.id
+          }))
+        }
+      } catch (error) {
+        console.error('加载学段列表失败:', error)
+      }
+    },
+    // 加载课程列表
+    async loadCourseList() {
+      this.loading = true
+      try {
+        const params = {
+          pageNum: this.filterForm.pageNum,
+          pageSize: this.filterForm.pageSize
+        }
+        
+        // 添加查询条件
+        if (this.searchQuery) {
+          params.courseName = this.searchQuery
+        }
+        if (this.filterForm.subjectId) {
+          params.subjectId = this.filterForm.subjectId
+        }
+        if (this.filterForm.stageId) {
+          params.stageId = this.filterForm.stageId
+        }
+        
+        // 状态筛选
+        if (this.currentTag === 'active') {
+          params.status = 1
+        } else if (this.currentTag === 'inactive') {
+          params.status = 0
+        }
+        
+        const res = await courseApi.page(params)
+        if (res.code === 200 && res.data) {
+          this.tableData = res.data.list || []
+          this.total = res.data.total || 0
+          
+          // 更新筛选标签数量
+          this.updateFilterTagCounts()
+        }
+      } catch (error) {
+        console.error('加载课程列表失败:', error)
+        this.$message.error('加载课程列表失败')
+      } finally {
+        this.loading = false
+      }
+    },
+    // 更新筛选标签计数
+    async updateFilterTagCounts() {
+      try {
+        // 获取总数量
+        const totalRes = await courseApi.page({ pageNum: 1, pageSize: 1 })
+        const totalCount = totalRes.code === 200 && totalRes.data ? totalRes.data.total : 0
+        
+        // 获取启用数量
+        const activeRes = await courseApi.page({ pageNum: 1, pageSize: 1, status: 1 })
+        const activeCount = activeRes.code === 200 && activeRes.data ? activeRes.data.total : 0
+        
+        // 获取停用数量
+        const inactiveRes = await courseApi.page({ pageNum: 1, pageSize: 1, status: 0 })
+        const inactiveCount = inactiveRes.code === 200 && inactiveRes.data ? inactiveRes.data.total : 0
+        
+        this.filterTags = [
+          { label: '总计', value: 'all', count: totalCount },
+          { label: '启用', value: 'active', count: activeCount },
+          { label: '停用', value: 'inactive', count: inactiveCount }
+        ]
+      } catch (error) {
+        console.error('更新筛选标签计数失败:', error)
+      }
+    },
+    // 搜索
+    handleSearch() {
+      this.filterForm.pageNum = 1
+      this.loadCourseList()
+    },
+    // 标签切换
+    handleTagChange(tag) {
+      this.currentTag = tag
+      this.filterForm.pageNum = 1
+      this.loadCourseList()
+    },
+    // 筛选条件改变
+    handleFilterChange() {
+      this.filterForm.pageNum = 1
+      this.loadCourseList()
+    },
+    // 分页改变
     handleCurrentChange(page) {
-      this.filterForm.currentPage = page
+      this.filterForm.pageNum = page
+      this.loadCourseList()
+    },
+    // 每页条数改变
+    handleSizeChange(size) {
+      this.filterForm.pageSize = size
+      this.filterForm.pageNum = 1
+      this.loadCourseList()
     },
     headerCellStyle() {
       return {
@@ -391,11 +360,19 @@ export default {
       }
     },
     getStatusClass(status) {
-      const map = {
-        启用: 'status-active',
-        停用: 'status-inactive'
-      }
-      return map[status] || 'status-active'
+      return status === 1 ? 'status-active' : 'status-inactive'
+    },
+    // 根据学科ID获取学科名称
+    getSubjectName(subjectId) {
+      if (!subjectId) return ''
+      const subject = this.subjectOptions.find(item => item.value === subjectId)
+      return subject ? subject.label : subjectId
+    },
+    // 根据学段ID获取学段名称
+    getStageName(stageId) {
+      if (!stageId) return ''
+      const stage = this.stageOptions.find(item => item.value === stageId)
+      return stage ? stage.label : stageId
     },
     handleAddCourse() {
       this.isEdit = false
@@ -404,45 +381,68 @@ export default {
     },
     handleEdit(row) {
       this.isEdit = true
-      this.currentEditData = { ...row }
+      // 转换数据格式以适配弹窗
+      this.currentEditData = {
+        id: row.id,
+        courseName: row.courseName,
+        courseCode: row.courseCode,
+        subjectId: row.subjectId,
+        stageId: row.stageId,
+        creditHours: row.creditHours,
+        courseDesc: row.courseDesc,
+        status: row.status,
+        remark: row.remark
+      }
       this.courseDialogVisible = true
     },
-    handleDelete(row) {
-      this.$confirm('确认删除该课程?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-        .then(() => {
-          this.tableData = this.tableData.filter((item) => item.id !== row.id)
+    async handleDelete(row) {
+      try {
+        await this.$confirm('确认删除该课程?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        
+        const res = await courseApi.delete(row.id)
+        if (res.code === 200) {
           this.$message.success('删除成功')
-        })
-        .catch(() => {
-          this.$message({
-            type: 'info',
-            message: '已取消删除'
-          })
-        })
-    },
-    handleCourseSubmit(formData) {
-      if (this.isEdit) {
-        // 编辑模式
-        const index = this.tableData.findIndex((item) => item.id === formData.id)
-        if (index !== -1) {
-          this.tableData.splice(index, 1, { ...formData })
+          this.loadCourseList()
+        } else {
+          this.$message.error(res.message || '删除失败')
         }
-        this.$message.success('编辑成功')
-      } else {
-        // 新增模式
-        const newId = Math.max(...this.tableData.map((item) => item.id), 0) + 1
-        this.tableData.push({
-          ...formData,
-          id: newId,
-          status: '启用'
-        })
-        this.$message.success('新增成功')
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('删除课程失败:', error)
+          this.$message.error('删除失败')
+        }
       }
-      this.courseDialogVisible = false
+    },
+    async handleCourseSubmit(formData) {
+      try {
+        if (this.isEdit) {
+          // 编辑模式
+          const res = await courseApi.update(formData.id, formData)
+          if (res.code === 200) {
+            this.$message.success('编辑成功')
+            this.loadCourseList()
+          } else {
+            this.$message.error(res.message || '编辑失败')
+          }
+        } else {
+          // 新增模式
+          const res = await courseApi.add(formData)
+          if (res.code === 200) {
+            this.$message.success('新增成功')
+            this.loadCourseList()
+          } else {
+            this.$message.error(res.message || '新增失败')
+          }
+        }
+        this.courseDialogVisible = false
+      } catch (error) {
+        console.error('保存课程失败:', error)
+        this.$message.error('保存失败')
+      }
     }
   }
 }
@@ -660,7 +660,7 @@ export default {
 
 .subject-text,
 .grade-level,
-.class-hour,
+.credit-hours,
 .description {
   color: #606266;
 }

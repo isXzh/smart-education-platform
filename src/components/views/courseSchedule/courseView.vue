@@ -40,13 +40,29 @@
 
         <!-- 右侧操作 -->
         <div class="actions">
+          <div class="filter-item">
+              <label>学段</label>
+              <el-select
+               class="xueduan-title"
+                v-model="selectedStage"
+                placeholder="请选择学段"
+                @change="handleStageChange"
+              >
+                <el-option
+                  v-for="stage in stageList"
+                  :key="stage.id"
+                  :label="stage.stageName"
+                  :value="stage.id"
+                ></el-option>
+              </el-select>
+            </div>
           <button
             class="action-btn"
             :class="{ active: filterVisible }"
             @click="toggleFilter"
           >
             <i class="el-icon-s-operation"></i>
-            筛选
+            高级筛选
           </button>
           <button class="action-btn primary" @click="exportSchedule">
             <i class="el-icon-download"></i>
@@ -62,6 +78,21 @@
         </div>
         <div class="filter-content">
           <div class="filter-row">
+            <!-- <div class="filter-item">
+              <label>学段</label>
+              <el-select
+                v-model="selectedStage"
+                placeholder="请选择学段"
+                @change="handleStageChange"
+              >
+                <el-option
+                  v-for="stage in stageList"
+                  :key="stage.id"
+                  :label="stage.name"
+                  :value="stage.id"
+                ></el-option>
+              </el-select>
+            </div> -->
             <div class="filter-item">
               <label>活动类型</label>
               <el-select
@@ -139,7 +170,7 @@
               :key="timeSlot.time"
               class="time-row"
             >
-              <div class="time-label">{{ timeSlot.time }}</div>
+              <div class="time-label">{{ timeSlot.label }}</div>
               <div
                 v-for="(day, dayIndex) in weekDays"
                 :key="dayIndex"
@@ -147,27 +178,17 @@
                 @click="handleCellClick(day, timeSlot)"
               >
                 <div
-                  v-for="course in getCourses(day.date, timeSlot.time)"
+                  v-for="course in getWeekViewCourses(day.date, timeSlot.time)"
                   :key="course.id"
-                  :class="['course-card', course.type]"
+                  :class="['course-card', course.activityType === 1 ? '校内' : '校外']"
                   @click.stop="handleCourseClick(course)"
                 >
-                  <div class="course-name">{{ course.name }}</div>
-                  <div class="course-teacher">{{ course.teacher }}</div>
+                  <div class="course-name">{{ course.courseName }}</div>
+                  <div class="course-teacher">{{ course.teacherName }}</div>
+                  <div class="course-teacher">{{ course.periodTimeRange }}</div>
                   <div class="course-location">
                     <i class="el-icon-location"></i>
-                    {{ course.location }}
-                  </div>
-                  <div
-                    class="course-tags"
-                    v-if="course.tags && course.tags.length"
-                  >
-                    <span
-                      v-for="(tag, idx) in course.tags"
-                      :key="idx"
-                      class="tag"
-                      >{{ tag }}</span
-                    >
+                    {{ course.location  }}
                   </div>
                 </div>
               </div>
@@ -187,17 +208,18 @@
             :key="timeSlot.time"
             class="timeline-row"
           >
-            <div class="time-label">{{ timeSlot.time }}</div>
+            <div class="time-label">{{ timeSlot.label }}</div>
             <div class="course-area">
               <div
-                v-for="course in getCourses(currentDateStr, timeSlot.time)"
+                v-for="course in getDayViewCourses(timeSlot.time)"
                 :key="course.id"
-                :class="['course-card', course.type]"
+                :class="['course-card', course.activityType === 1 ? '校内' : '校外']"
                 @click="handleCourseClick(course)"
               >
-                <div class="course-name">{{ course.name }}</div>
-                <div class="course-teacher">{{ course.teacher }}</div>
-                <div class="course-location">{{ course.location }}</div>
+                <div class="course-name">{{ course.courseName }}</div>
+                <div class="course-teacher">{{ course.teacherName }}</div>
+                <div class="course-teacher">{{ course.periodTimeRange }}</div>
+                <div class="course-location">{{ course.location  }}</div>
               </div>
             </div>
           </div>
@@ -246,13 +268,21 @@
                   <div
                     v-for="course in day.courses.slice(0, 3)"
                     :key="course.id"
-                    :class="['mini-course', course.type]"
+                    :class="['mini-course', course.activityType === 1 ? '校内' : '校外']"
+                    @click.stop="handleCourseClick(course)"
                   >
-                    {{ course.name }}
+                    {{ course.courseName }}
                   </div>
-                  <div v-if="day.courses.length > 3" class="more-courses">
-                    +{{ day.courses.length - 3 }} 更多
-                  </div>
+                  <MonthDayPopover
+                    v-if="day.courses.length > 3"
+                    :date="day.fullDate"
+                    :courses="day.courses"
+                    @course-click="handleCourseClick"
+                  >
+                    <div class="more-courses">
+                      +{{ day.courses.length - 3 }} 更多
+                    </div>
+                  </MonthDayPopover>
                 </div>
               </div>
             </div>
@@ -261,25 +291,26 @@
       </div>
     </div>
 
-    <!-- 课程详情弹窗 -->
-    <CourseDetailDialog
-      :visible.sync="courseDetailVisible"
-      :course="selectedCourse"
-      @close="courseDetailVisible = false"
-      @edit="handleEditCourse"
-      @copy="handleCopyCourse"
-      @delete="handleDeleteCourse"
+    <!-- 排课预览弹窗 -->
+    <ShowPreview
+      :visible.sync="previewVisible"
+      :data="selectedCourse"
     />
   </div>
 </template>
 
 <script>
-import CourseDetailDialog from "../dialog/CourseDetailDialog.vue";
+import gradeLevelApi from "@/api/gradeLevel.js";
+import classPeriodApi from "@/api/classPeriod.js";
+import scheduleApi from "@/api/schedule.js";
+import ShowPreview from "./dialog/showPreview.vue";
+import MonthDayPopover from "./dialog/MonthDayPopover.vue";
 
 export default {
   name: "CourseView",
   components: {
-    CourseDetailDialog,
+    ShowPreview,
+    MonthDayPopover,
   },
   data() {
     return {
@@ -290,88 +321,37 @@ export default {
         { key: "month", label: "月视图" },
       ],
       currentDate: new Date(),
-      timeSlots: [
-        { time: "08:00", label: "第1节" },
-        { time: "09:00", label: "第2节" },
-        { time: "10:00", label: "第3节" },
-        { time: "11:00", label: "第4节" },
-        { time: "14:00", label: "第5节" },
-        { time: "15:00", label: "第6节" },
-        { time: "16:00", label: "第7节" },
-        { time: "17:00", label: "第8节" },
-      ],
-      courses: [
-        {
-          id: 1,
-          name: "数学基础课",
-          teacher: "张老师",
-          location: "教学楼A-101",
-          date: "2026-04-02",
-          time: "08:00",
-          type: "校内",
-          tags: ["必修"],
-        },
-        {
-          id: 2,
-          name: "化学实验",
-          teacher: "赵老师",
-          location: "实验楼B-205",
-          date: "2026-04-03",
-          time: "09:00",
-          type: "校内",
-          tags: ["实验"],
-        },
-        {
-          id: 3,
-          name: "英语口语",
-          teacher: "李老师",
-          location: "语言室C-301",
-          date: "2026-04-02",
-          time: "09:00",
-          type: "校内",
-          tags: ["选修"],
-        },
-        {
-          id: 4,
-          name: "美术写生",
-          teacher: "孙老师",
-          location: "美术馆",
-          date: "2026-04-05",
-          time: "10:00",
-          type: "校外",
-          tags: ["实践"],
-        },
-        {
-          id: 5,
-          name: "物理实验",
-          teacher: "王老师",
-          location: "实验楼D-102",
-          date: "2026-04-02",
-          time: "11:00",
-          type: "校内",
-          tags: ["实验"],
-        },
-        {
-          id: 6,
-          name: "体育课",
-          teacher: "刘老师",
-          location: "体育馆",
-          date: "2026-04-01",
-          time: "08:00",
-          type: "校内",
-          tags: ["必修"],
-        },
-      ],
+      // 时间段列表，从classPeriod接口获取
+      timeSlots: [],
+      // 学段列表
+      stageList: [],
+      // 当前选中的学段
+      selectedStage: null,
+      // 排课数据列表
+      scheduleList: [],
+      // 课时id与数据的映射，用于匹配
+      periodMap: {},
       filterVisible: false,
       filterForm: {
         activityType: "",
         teacher: "",
         subject: "",
       },
-      // 课程详情弹窗
-      courseDetailVisible: false,
+      // 排课预览弹窗
+      previewVisible: false,
       selectedCourse: {},
     };
+  },
+  created() {
+    // 从 URL 参数读取日期和视图
+    const { date, view } = this.$route.query;
+    if (date) {
+      this.currentDate = new Date(date);
+    }
+    if (view && ['day', 'week', 'month'].includes(view)) {
+      this.currentView = view;
+    }
+    this.initStageList();
   },
   computed: {
     weekDays() {
@@ -440,12 +420,15 @@ export default {
           const isToday = this.isToday(date);
           const dateStr = this.formatDate(date);
 
+          // 通过lessonDate匹配月视图数据
+          const dayCourses = this.getMonthViewCourses(dateStr);
+
           week.push({
             date: date.getDate(),
             fullDate: dateStr,
             isCurrentMonth,
             isToday,
-            courses: this.courses.filter((c) => c.date === dateStr),
+            courses: dayCourses,
           });
         }
         weeks.push(week);
@@ -461,26 +444,149 @@ export default {
     },
   },
   methods: {
+    // 初始化学段列表
+    async initStageList() {
+      try {
+        const res = await gradeLevelApi.list();
+        if (res && res.data) {
+          this.stageList = res.data;
+          // 默认选择第一个学段
+          if (this.stageList.length > 0) {
+            this.selectedStage = this.stageList[0].id;
+            // 初始化学段后，获取课时列表和排课数据
+            await this.initClassPeriods();
+            await this.fetchScheduleData();
+          }
+        }
+      } catch (error) {
+        console.error("获取学段列表失败:", error);
+      }
+    },
+
+    // 学段切换处理
+    async handleStageChange() {
+      await this.initClassPeriods();
+      await this.fetchScheduleData();
+    },
+
+    // 初始化课时列表
+    async initClassPeriods() {
+      if (!this.selectedStage) return;
+      try {
+        const res = await classPeriodApi.list(this.selectedStage);
+        if (res && res.data) {
+          // 构建课时map，用于后续匹配
+          this.periodMap = {};
+          res.data.forEach((period) => {
+            this.periodMap[period.id] = period;
+          });
+          // 构建时间段列表，用于视图左侧显示
+          this.timeSlots = res.data.map((period) => ({
+            time: period.startTime,
+            label: `${period.startTime}`,
+            periodId: period.id,
+          }));
+        }
+      } catch (error) {
+        console.error("获取课时列表失败:", error);
+      }
+    },
+
+    // 获取排课数据
+    async fetchScheduleData() {
+      if (!this.selectedStage) return;
+
+      try {
+        let params = {
+          stageId: this.selectedStage,
+        };
+
+        if (this.currentView === "day") {
+          // 日视图：查询当天数据
+          params.startDate = this.currentDateStr;
+          params.endDate = this.currentDateStr;
+        } else if (this.currentView === "week") {
+          // 周视图：查询本周数据
+          const startDate = this.weekDays[0].date;
+          const endDate = this.weekDays[6].date;
+          params.startDate = startDate;
+          params.endDate = endDate;
+        } else if (this.currentView === "month") {
+          // 月视图：查询本月数据
+          const year = this.currentDate.getFullYear();
+          const month = this.currentDate.getMonth();
+          const firstDay = new Date(year, month, 1);
+          const lastDay = new Date(year, month + 1, 0);
+          params.startDate = this.formatDate(firstDay);
+          params.endDate = this.formatDate(lastDay);
+        }
+
+        const res = await scheduleApi.page(params);
+        if (res && res.data && res.data.list) {
+          this.scheduleList = res.data.list;
+        } else {
+          this.scheduleList = [];
+        }
+      } catch (error) {
+        console.error("获取排课数据失败:", error);
+        this.scheduleList = [];
+      }
+    },
+
+    // 日视图获取课程
+    getDayViewCourses(time) {
+      // 通过periodId匹配排课数据
+      return this.scheduleList.filter((schedule) => {
+        const period = this.periodMap[schedule.periodId];
+        if (!period) return false;
+        return period.startTime === time;
+      });
+    },
+
+    // 周视图获取课程
+    getWeekViewCourses(date, time) {
+      // 通过periodId匹配排课数据，并且日期匹配
+      return this.scheduleList.filter((schedule) => {
+        if (schedule.lessonDate !== date) return false;
+        const period = this.periodMap[schedule.periodId];
+        if (!period) return false;
+        return period.startTime === time;
+      });
+    },
+
+    // 月视图获取课程
+    getMonthViewCourses(dateStr) {
+      // 通过lessonDate匹配月视图数据
+      return this.scheduleList.filter((schedule) => {
+        return schedule.lessonDate === dateStr;
+      });
+    },
+
     formatDate(date) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     },
+
     getWeekStart(date) {
       const d = new Date(date);
       const day = d.getDay();
       const diff = d.getDate() - day + (day === 0 ? -6 : 1);
       return new Date(d.setDate(diff));
     },
+
     isToday(date) {
       const today = new Date();
       const dateStr = typeof date === "string" ? date : this.formatDate(date);
       return dateStr === this.formatDate(today);
     },
+
     switchView(view) {
       this.currentView = view;
+      this.fetchScheduleData();
     },
+
     prev() {
       if (this.currentView === "week") {
         this.currentDate.setDate(this.currentDate.getDate() - 7);
@@ -491,7 +597,9 @@ export default {
       }
       // 触发响应式更新
       this.currentDate = new Date(this.currentDate);
+      this.fetchScheduleData();
     },
+
     next() {
       if (this.currentView === "week") {
         this.currentDate.setDate(this.currentDate.getDate() + 7);
@@ -502,73 +610,48 @@ export default {
       }
       // 触发响应式更新
       this.currentDate = new Date(this.currentDate);
+      this.fetchScheduleData();
     },
+
     goToday() {
       this.currentDate = new Date();
+      this.fetchScheduleData();
     },
-    getCourses(date, time) {
-      return this.courses.filter((c) => c.date === date && c.time === time);
-    },
+
     handleCellClick(day, timeSlot) {
       console.log("点击了单元格:", day, timeSlot);
     },
+
     handleCourseClick(course) {
-      // 准备弹窗需要的课程数据
-      this.selectedCourse = {
-        ...course,
-        // 如果有需要，可以在这里添加额外的字段转换
-        date: course.date,
-        duration: "90 分钟",
-        grade: "初中二年级",
-        activityType: course.type || "校内",
-        subject: "物理",
-        timeRange: `${course.time} - 09:30`,
-        period: "第1-2节",
-        classrooms: ["移动课堂箱-E01", "移动课堂箱-E02"],
-      };
-      this.courseDetailVisible = true;
+      // 打开排课预览弹窗
+      this.selectedCourse = course;
+      this.previewVisible = true;
     },
+
     toggleFilter() {
       this.filterVisible = !this.filterVisible;
     },
+
     applyFilter() {
       this.filterVisible = false;
       console.log("应用筛选:", this.filterForm);
       this.$message.success("筛选已应用");
+      // 重新获取排课数据
+      this.fetchScheduleData();
     },
+
     exportSchedule() {
       console.log("导出课表");
-    },
-    // 课程详情弹窗操作
-    handleEditCourse(course) {
-      console.log("编辑课程:", course);
-      // TODO: 实现编辑功能
-      this.$message.info("编辑功能开发中...");
-    },
-    handleCopyCourse(course) {
-      console.log("复制课程:", course);
-      // TODO: 实现复制功能
-      this.$message.success("课程已复制");
-    },
-    handleDeleteCourse(course) {
-      console.log("删除课程:", course);
-      // TODO: 实现删除功能
-      this.$confirm("确定要删除该课程吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(() => {
-          this.$message.success("课程已删除");
-          this.courseDetailVisible = false;
-        })
-        .catch(() => {});
+      this.$message.info("导出功能开发中...");
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+.xueduan-title {
+        margin-left:10px;
+      }
 .schedule-view {
   padding: 20px;
   background: #f5f7fa;
@@ -704,13 +787,14 @@ export default {
 .actions {
   display: flex;
   gap: 8px;
+  align-items: center;
 
   .action-btn {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 0 16px;
-    height: 32px;
+    height: 40px;
     border: 1px solid #dcdfe6;
     background: #fff;
     border-radius: 4px;
@@ -770,7 +854,7 @@ export default {
 
     .filter-item {
       flex: 1;
-
+      
       label {
         display: block;
         font-size: 13px;
@@ -956,20 +1040,6 @@ export default {
 
     i {
       font-size: 10px;
-    }
-  }
-
-  .course-tags {
-    display: flex;
-    gap: 4px;
-    margin-top: 4px;
-
-    .tag {
-      font-size: 10px;
-      padding: 1px 4px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 2px;
-      color: #666;
     }
   }
 }

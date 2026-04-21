@@ -3,7 +3,7 @@ import http from "@/utils/http.js";
 export default {
   // 修改课程
   async update(id, data) {
-    return await http.put(`/api/base/course/${id}`, data);
+    return await http.put2(`/api/base/course/${id}`, data);
   },
   // 删除课程
   async delete(id) {
@@ -23,9 +23,9 @@ export default {
       params: { status },
     });
   },
-  // 分页查询课程
+  // 分页查询课程 - 使用POST方法
   async page(params) {
-    return await http.get("/api/base/course/page", params);
+    return await http.post("/api/base/course/page", params);
   },
   // 获取课程列表
   async list() {
