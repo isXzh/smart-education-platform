@@ -29,7 +29,7 @@
           <template slot-scope="{ node, data }">
             <span class="custom-tree-node">
               <span class="node-label">
-                <i :class="getOrgIcon(data.type)" class="node-icon"></i>
+                <i :class="getOrgIcon(data.orgType)" class="node-icon"></i>
                 {{ node.label }}
               </span>
             </span>
@@ -73,10 +73,9 @@
           </el-input>
           <el-select v-model="filters.status" placeholder="全部状态" size="small" class="status-select">
             <el-option label="全部状态" value=""></el-option>
-            <el-option label="在线" value="online"></el-option>
-            <el-option label="离线" value="offline"></el-option>
-            <el-option label="使用中" value="inuse"></el-option>
-            <el-option label="已过期" value="expired"></el-option>
+            <el-option label="未激活" value="inactive"></el-option>
+            <el-option label="正常" value="normal"></el-option>
+            <el-option label="故障" value="fault"></el-option>
           </el-select>
         </div>
       </div>
@@ -84,26 +83,26 @@
       <!-- 设备表格 -->
       <div class="table-container">
         <el-table
-          :data="paginatedDevices"
+          :data="filteredDevices"
           style="width: 100%"
           @selection-change="handleSelectionChange"
           v-loading="loading"
           stripe
         >
-          <el-table-column type="selection" width="55"></el-table-column>
-          <el-table-column prop="name" label="名称" min-width="140"></el-table-column>
-          <el-table-column prop="department" label="部门" min-width="200">
+          <el-table-column type="selection"></el-table-column>
+          <el-table-column prop="name" label="名称"></el-table-column>
+          <el-table-column prop="department" label="部门">
             <template slot-scope="scope">
               <span class="department-text">{{ scope.row.department }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="model" label="设备型号" width="120"></el-table-column>
-          <el-table-column prop="sn" label="SIP码" width="120">
+          <el-table-column prop="model" label="设备型号"></el-table-column>
+          <el-table-column prop="sn" label="SIP码">
             <template slot-scope="scope">
               <span class="sn-code">{{ scope.row.sn }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="90">
+          <el-table-column prop="status" label="状态">
             <template slot-scope="scope">
               <span :class="getStatusBadgeClass(scope.row.status)">
                 <span class="status-dot"></span>
@@ -129,22 +128,6 @@
             </template>
           </el-table-column> -->
         </el-table>
-
-        <!-- 分页 -->
-        <div class="pagination-wrapper">
-          <div class="pagination-info">
-            共 {{ filteredDevices.length }} 台设备，当前第 {{ currentPage }} / {{ totalPages }} 页
-          </div>
-          <el-pagination
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            :current-page="currentPage"
-            :page-sizes="[10, 20, 50, 100]"
-            :page-size="pageSize"
-            layout="prev, pager, next"
-            :total="filteredDevices.length"
-          ></el-pagination>
-        </div>
       </div>
     </div>
 
@@ -185,17 +168,14 @@
 
         <el-form-item label="设备状态" prop="status">
           <el-select v-model="deviceForm.status" placeholder="请选择设备状态" style="width: 100%">
-            <el-option label="在线" value="online">
-              <span class="status-option"> <span class="status-dot online"></span>在线 </span>
+            <el-option label="未激活" value="inactive">
+              <span class="status-option"> <span class="status-dot inactive"></span>未激活 </span>
             </el-option>
-            <el-option label="离线" value="offline">
-              <span class="status-option"> <span class="status-dot offline"></span>离线 </span>
+            <el-option label="正常" value="normal">
+              <span class="status-option"> <span class="status-dot normal"></span>正常 </span>
             </el-option>
-            <el-option label="使用中" value="inuse">
-              <span class="status-option"> <span class="status-dot inuse"></span>使用中 </span>
-            </el-option>
-            <el-option label="已过期" value="expired">
-              <span class="status-option"> <span class="status-dot expired"></span>已过期 </span>
+            <el-option label="故障" value="fault">
+              <span class="status-option"> <span class="status-dot fault"></span>故障 </span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -308,6 +288,9 @@
 </template>
 
 <script>
+  import orgStructure from '@/api/orgStructure';
+  import device from '@/api/device';
+
   export default {
     name: 'DeviceManagement',
     data() {
@@ -318,8 +301,6 @@
           search: '',
           status: '',
         },
-        currentPage: 1,
-        pageSize: 10,
         orgFilter: '',
         selectedNode: null,
         deviceDialog: {
@@ -331,173 +312,13 @@
           device: null,
         },
         // 组织数据
-        orgData: [
-          {
-            id: '1',
-            label: '兴图新科教育集团',
-            type: 'group',
-            children: [
-              {
-                id: '1-1',
-                label: '第一实验小学',
-                type: 'school',
-                children: [
-                  {
-                    id: '1-1-1',
-                    label: '小学部',
-                    type: 'department',
-                    children: [
-                      {
-                        id: '1-1-1-1',
-                        label: '一年级',
-                        type: 'grade',
-                        children: [
-                          {
-                            id: '1-1-1-1-1',
-                            label: '101教室',
-                            type: 'classroom',
-                          },
-                          {
-                            id: '1-1-1-1-2',
-                            label: '102教室',
-                            type: 'classroom',
-                          },
-                        ],
-                      },
-                      {
-                        id: '1-1-1-2',
-                        label: '二年级',
-                        type: 'grade',
-                        children: [
-                          {
-                            id: '1-1-1-2-1',
-                            label: '201教室',
-                            type: 'classroom',
-                          },
-                          {
-                            id: '1-1-1-2-2',
-                            label: '202教室',
-                            type: 'classroom',
-                          },
-                        ],
-                      },
-                      {
-                        id: '1-1-1-3',
-                        label: '三年级',
-                        type: 'grade',
-                        children: [
-                          {
-                            id: '1-1-1-3-1',
-                            label: '301教室',
-                            type: 'classroom',
-                          },
-                          {
-                            id: '1-1-1-3-2',
-                            label: '302教室',
-                            type: 'classroom',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-              {
-                id: '1-2',
-                label: '第二实验中学',
-                type: 'school',
-                children: [
-                  {
-                    id: '1-2-1',
-                    label: '初中部',
-                    type: 'department',
-                    children: [
-                      {
-                        id: '1-2-1-1',
-                        label: '初一年级',
-                        type: 'grade',
-                        children: [
-                          {
-                            id: '1-2-1-1-1',
-                            label: '初一(1)班',
-                            type: 'classroom',
-                          },
-                          {
-                            id: '1-2-1-1-2',
-                            label: '初一(2)班',
-                            type: 'classroom',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+        orgData: [],
         defaultProps: {
           children: 'children',
-          label: 'label',
+          label: 'orgName',
         },
         // 设备数据
-        deviceData: [
-          {
-            id: 1,
-            name: '移动课堂箱-A01',
-            department: '第一实验小学/小学部/三年级/301教室',
-            departmentId: '1-1-1-3-1',
-            model: 'MCB-2024-PRO',
-            sn: 'SN202401001',
-            status: 'online',
-            expiryDate: '2025-12-31',
-            activationDate: '2024-01-15',
-          },
-          {
-            id: 2,
-            name: '移动课堂箱-A02',
-            department: '第一实验小学/小学部/三年级/301教室',
-            departmentId: '1-1-1-3-1',
-            model: 'MCB-2024-PRO',
-            sn: 'SN202401002',
-            status: 'inuse',
-            expiryDate: '2025-12-31',
-            activationDate: '2024-01-15',
-          },
-          {
-            id: 3,
-            name: '移动课堂箱-B01',
-            department: '第一实验小学/小学部/二年级/201教室',
-            departmentId: '1-1-1-2-1',
-            model: 'MCB-2024-STD',
-            sn: 'SN202401003',
-            status: 'offline',
-            expiryDate: '2025-06-30',
-            activationDate: '2024-02-01',
-          },
-          {
-            id: 4,
-            name: '移动课堂箱-C01',
-            department: '第二实验中学/初中部/初一年级/初一(1)班',
-            departmentId: '1-2-1-1-1',
-            model: 'MCB-2024-PRO',
-            sn: 'SN202401004',
-            status: 'online',
-            expiryDate: '2026-03-15',
-            activationDate: '2024-01-20',
-          },
-          {
-            id: 5,
-            name: '移动课堂箱-D01',
-            department: '第一实验小学/小学部/一年级/101教室',
-            departmentId: '1-1-1-1-1',
-            model: 'MCB-2024-LITE',
-            sn: 'SN202401005',
-            status: 'expired',
-            expiryDate: '2024-12-31',
-            activationDate: '2023-12-01',
-          },
-        ],
+        deviceData: [],
         // 设备日志
         deviceLogs: [
           {
@@ -572,7 +393,7 @@
           departmentId: '',
           model: '',
           sn: '',
-          status: 'offline',
+          status: 'inactive',
           expiryDate: '',
           activationDate: '',
         },
@@ -593,7 +414,7 @@
 
         // 根据选中的组织节点过滤
         if (this.selectedNode) {
-          result = result.filter(device => device.departmentId.startsWith(this.selectedNode.id));
+          result = result.filter(device => String(device.departmentId) === String(this.selectedNode.id));
         }
 
         // 根据搜索词过滤
@@ -611,16 +432,6 @@
 
         return result;
       },
-      // 分页后的设备
-      paginatedDevices() {
-        const start = (this.currentPage - 1) * this.pageSize;
-        const end = start + this.pageSize;
-        return this.filteredDevices.slice(start, end);
-      },
-      // 总页数
-      totalPages() {
-        return Math.ceil(this.filteredDevices.length / this.pageSize);
-      },
       // 组织级联选择器选项
       orgCascaderOptions() {
         return this.orgData;
@@ -631,40 +442,102 @@
         this.$refs.orgTree.filter(val);
       },
     },
+    mounted() {
+      this.loadOrgTree();
+    },
     methods: {
+      async loadOrgTree() {
+        try {
+          this.loading = true;
+          const res = await orgStructure.tree();
+          if (res.success && res.data) {
+            this.orgData = res.data;
+            if (this.orgData.length > 0) {
+              this.selectedNode = this.orgData[0];
+              await this.loadDeviceList(this.selectedNode.id);
+            }
+          }
+        } catch (error) {
+          console.error('加载组织树失败:', error);
+          this.$message.error('加载组织树失败');
+        } finally {
+          this.loading = false;
+        }
+      },
+      async loadDeviceList(orgId) {
+        try {
+          this.loading = true;
+          const res = await device.list({ orgId });
+          if (res.success && res.data) {
+            this.deviceData = res.data.map(item => this.mapDeviceData(item));
+          }
+        } catch (error) {
+          console.error('加载设备列表失败:', error);
+          this.$message.error('加载设备列表失败');
+        } finally {
+          this.loading = false;
+        }
+      },
+      mapDeviceData(apiData) {
+        return {
+          id: apiData.id,
+          name: apiData.deviceName || '',
+          department: apiData.deptNamePath || apiData.deptName || '',
+          departmentId: String(apiData.deptCode || ''),
+          model: apiData.deviceModel || '',
+          sn: apiData.snCode || '',
+          status: this.mapDeviceStatus(apiData.status),
+          expiryDate: this.formatDate(apiData.expireDate),
+          activationDate: this.formatDate(apiData.activeTime),
+        };
+      },
+      formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      },
+      mapDeviceStatus(status) {
+        const statusMap = {
+          0: 'inactive',
+          1: 'normal',
+          2: 'fault',
+        };
+        return statusMap[status] || 'inactive';
+      },
       filterNode(value, data) {
         if (!value) return true;
-        return data.label.indexOf(value) !== -1;
+        return data.orgName.indexOf(value) !== -1;
       },
-      getOrgIcon(type) {
+      getOrgIcon(orgType) {
         const icons = {
-          group: 'el-icon-folder-opened',
-          school: 'el-icon-folder-opened',
-          department: 'el-icon-folder-opened',
-          grade: 'el-icon-folder-opened',
-          classroom: 'el-icon-office-building',
+          1: 'el-icon-s-home',
+          2: 'el-icon-s-cooperation',
+          3: 'el-icon-school',
+          4: 'el-icon-office-building',
         };
-        return icons[type] || 'el-icon-folder';
+        return icons[orgType] || 'el-icon-folder';
       },
       handleNodeClick(data) {
         this.selectedNode = data;
         this.currentPage = 1;
+        this.loadDeviceList(data.id);
       },
       getStatusBadgeClass(status) {
         const classes = {
-          online: 'status-badge online',
-          offline: 'status-badge offline',
-          inuse: 'status-badge inuse',
-          expired: 'status-badge expired',
+          inactive: 'status-badge inactive',
+          normal: 'status-badge normal',
+          fault: 'status-badge fault',
         };
         return classes[status] || 'status-badge';
       },
       getStatusLabel(status) {
         const labels = {
-          online: '在线',
-          offline: '离线',
-          inuse: '使用中',
-          expired: '已过期',
+          inactive: '未激活',
+          normal: '正常',
+          fault: '故障',
         };
         return labels[status] || status;
       },
@@ -688,13 +561,6 @@
       },
       handleSelectionChange(selection) {
         this.selectedDevices = selection.map(item => item.id);
-      },
-      handleSizeChange(size) {
-        this.pageSize = size;
-        this.currentPage = 1;
-      },
-      handleCurrentChange(current) {
-        this.currentPage = current;
       },
       // 打开添加设备弹窗
       openAddDeviceDialog() {
@@ -978,22 +844,17 @@
     font-weight: 500;
   }
 
-  .status-badge.online {
-    background: #f0f9eb;
-    color: #67c23a;
-  }
-
-  .status-badge.offline {
+  .status-badge.inactive {
     background: #f5f7fa;
     color: #909399;
   }
 
-  .status-badge.inuse {
-    background: #ecf5ff;
-    color: #409eff;
+  .status-badge.normal {
+    background: #f0f9eb;
+    color: #67c23a;
   }
 
-  .status-badge.expired {
+  .status-badge.fault {
     background: #fef0f0;
     color: #f56c6c;
   }
@@ -1004,19 +865,15 @@
     border-radius: 50%;
   }
 
-  .status-dot.online {
-    background: #67c23a;
-  }
-
-  .status-dot.offline {
+  .status-dot.inactive {
     background: #909399;
   }
 
-  .status-dot.inuse {
-    background: #409eff;
+  .status-dot.normal {
+    background: #67c23a;
   }
 
-  .status-dot.expired {
+  .status-dot.fault {
     background: #f56c6c;
   }
 
