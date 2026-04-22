@@ -62,7 +62,7 @@
       </div>
       <div class="form-item time-length" v-if="title == '编辑课时'">
         <span class="time-title">课时时长：</span>
-        <span class="time-data">{{ `40分钟` }}</span>
+        <span class="time-data">{{ editData.duration }}</span>
       </div>
       <!-- 排序 -->
       <div class="form-item">

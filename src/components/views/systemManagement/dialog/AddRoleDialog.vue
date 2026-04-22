@@ -64,6 +64,8 @@
 </template>
 
 <script>
+import role from "@/api/role";
+
 export default {
   name: "AddRoleDialog",
   props: {
@@ -116,16 +118,26 @@ export default {
       this.dialogVisible = false;
       this.resetForm();
     },
-    handleSubmit() {
-      this.$refs.form.validate((valid) => {
+    async handleSubmit() {
+      this.$refs.form.validate(async (valid) => {
         if (valid) {
           this.submitting = true;
-          setTimeout(() => {
+          try {
+            const res = await role.add(this.form);
+            if (res.code === 200) {
+              this.$message.success("新增角色成功");
+              this.dialogVisible = false;
+              this.$emit("success");
+              this.resetForm();
+            } else {
+              this.$message.error(res.msg || "新增角色失败");
+            }
+          } catch (error) {
+            console.error("新增角色失败:", error);
+            this.$message.error("新增角色失败");
+          } finally {
             this.submitting = false;
-            this.dialogVisible = false;
-            this.$emit("success");
-            this.resetForm();
-          }, 500);
+          }
         }
       });
     },

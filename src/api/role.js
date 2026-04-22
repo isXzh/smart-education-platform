@@ -7,7 +7,7 @@ export default {
   },
   // 修改角色
   async update(id, data) {
-    return await http.put(`/api/system/role/${id}`, data);
+    return await http.put2(`/api/system/role/${id}`, data);
   },
   // 删除角色
   async delete(id) {
