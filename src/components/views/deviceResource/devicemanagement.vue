@@ -73,9 +73,8 @@
           </el-input>
           <el-select v-model="filters.status" placeholder="全部状态" size="small" class="status-select">
             <el-option label="全部状态" value=""></el-option>
-            <el-option label="未激活" value="inactive"></el-option>
             <el-option label="正常" value="normal"></el-option>
-            <el-option label="故障" value="fault"></el-option>
+            <el-option label="冻结" value="fault"></el-option>
           </el-select>
         </div>
       </div>
@@ -168,13 +167,13 @@
 
         <el-form-item label="设备状态" prop="status">
           <el-select v-model="deviceForm.status" placeholder="请选择设备状态" style="width: 100%">
-            <el-option label="未激活" value="inactive">
+            <!-- <el-option label="未激活" value="inactive">
               <span class="status-option"> <span class="status-dot inactive"></span>未激活 </span>
-            </el-option>
+            </el-option> -->
             <el-option label="正常" value="normal">
               <span class="status-option"> <span class="status-dot normal"></span>正常 </span>
             </el-option>
-            <el-option label="故障" value="fault">
+            <el-option label="冻结" value="fault">
               <span class="status-option"> <span class="status-dot fault"></span>故障 </span>
             </el-option>
           </el-select>
@@ -501,11 +500,11 @@
       },
       mapDeviceStatus(status) {
         const statusMap = {
-          0: 'inactive',
-          1: 'normal',
-          2: 'fault',
+          // 0: 'inactive',
+          0: 'normal',
+          1: 'fault',
         };
-        return statusMap[status] || 'inactive';
+        return statusMap[status] || 'normal';
       },
       filterNode(value, data) {
         if (!value) return true;
@@ -527,7 +526,7 @@
       },
       getStatusBadgeClass(status) {
         const classes = {
-          inactive: 'status-badge inactive',
+          // inactive: 'status-badge inactive',
           normal: 'status-badge normal',
           fault: 'status-badge fault',
         };
@@ -535,7 +534,7 @@
       },
       getStatusLabel(status) {
         const labels = {
-          inactive: '未激活',
+          // inactive: '未激活',
           normal: '正常',
           fault: '故障',
         };
