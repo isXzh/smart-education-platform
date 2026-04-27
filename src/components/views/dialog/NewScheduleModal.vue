@@ -283,7 +283,6 @@
     mounted() {
       this.loadGradeLevelList();
       this.loadSubjectList();
-      this.loadCourseList();
       this.loadTeacherList();
     },
     watch: {
@@ -309,6 +308,16 @@
       'form.grade': {
         handler() {
           this.loadClassList();
+        },
+      },
+      'form.subject': {
+        handler(newVal) {
+          if (newVal) {
+            this.loadCourseList(newVal);
+          } else {
+            this.courseList = [];
+            this.form.course = '';
+          }
         },
       },
     },
@@ -352,9 +361,9 @@
           console.error('加载学科列表失败:', error);
         }
       },
-      async loadCourseList() {
+      async loadCourseList(subjectId) {
         try {
-          const res = await course.list();
+          const res = await course.listBySubject(subjectId);
           if (res.code === 200 && res.data) {
             this.courseList = res.data.map(item => ({
               label: item.courseName,

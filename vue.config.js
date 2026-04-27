@@ -1,7 +1,7 @@
 // vue.config.js
 module.exports = {
   // ... 你原有的其他配置（如 devServer.proxy 等）
-
+  assetsDir: '', // 添加这行
   devServer: {
     // ... 你原有的 devServer 配置
 

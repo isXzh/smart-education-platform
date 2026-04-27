@@ -153,7 +153,7 @@
               </div>
             </div>
           </div>
-          <div>
+          <!-- <div>
             <label class="block text-sm font-medium text-gray-700 mb-3"
               >主题色</label
             >
@@ -192,7 +192,7 @@
                 修改主题色后，全局导航、按钮、图标等颜色将同步更新。
               </p>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- 数据同步 -->
