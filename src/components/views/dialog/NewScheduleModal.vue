@@ -126,14 +126,10 @@
             <div class="classroom-list">
               <el-radio-group v-model="form.mainClassroom">
                 <div class="classroom-item">
-                  <el-radio :label="1"
-                    >移动课堂箱-A01 <span class="classroom-location">教学楼A-101</span></el-radio
-                  >
+                  <el-radio :label="1">移动课堂箱-A01 <span class="classroom-location">教学楼A-101</span></el-radio>
                 </div>
                 <div class="classroom-item">
-                  <el-radio :label="2"
-                    >移动课堂箱-A02 <span class="classroom-location">教学楼A-102</span></el-radio
-                  >
+                  <el-radio :label="2">移动课堂箱-A02 <span class="classroom-location">教学楼A-102</span></el-radio>
                 </div>
               </el-radio-group>
             </div>
@@ -412,7 +408,7 @@
           const res = await classPeriod.list(stageId);
           if (res.code === 200 && res.data) {
             this.periodList = res.data.map(item => ({
-              label: item.periodName,
+              label: `${item.periodName} ${item.startTime}--${item.endTime}`,
               value: item.id,
             }));
           }
