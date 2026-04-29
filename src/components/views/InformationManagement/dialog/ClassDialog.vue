@@ -10,12 +10,7 @@
     <el-form ref="form" :model="formData" :rules="rules" label-width="100px" class="class-form">
       <!-- 班级名称 -->
       <el-form-item label="班级名称" prop="className">
-        <el-input
-          v-model="formData.className"
-          placeholder="请输入班级名称"
-          maxlength="50"
-          show-word-limit
-        />
+        <el-input v-model="formData.className" placeholder="请输入班级名称" maxlength="50" show-word-limit />
       </el-form-item>
 
       <!-- 所属学段 -->
@@ -39,8 +34,13 @@
 
       <!-- 班主任 -->
       <el-form-item label="班主任">
-        <el-select v-model="formData.headTeacherId" placeholder="请选择班主任" style="width: 100%" clearable>
-          <el-option v-for="teacher in teacherList" :key="teacher.id" :label="teacher.teacherName" :value="teacher.id" />
+        <el-select v-model="formData.teacherId" placeholder="请选择班主任" style="width: 100%" clearable>
+          <el-option
+            v-for="teacher in teacherList"
+            :key="teacher.id"
+            :label="teacher.teacherName"
+            :value="teacher.id"
+          />
         </el-select>
         <div class="form-tip">
           <i class="el-icon-info"></i>
@@ -140,7 +140,7 @@
           className: '',
           stageId: '',
           gradeId: '',
-          headTeacherId: '',
+          teacherId: '',
           classroomName: '',
           sortOrder: 1,
           status: 1,
@@ -181,7 +181,7 @@
             className: this.editData.className || '',
             stageId: this.editData.stageId || '',
             gradeId: this.editData.gradeId || '',
-            headTeacherId: this.editData.headTeacherId || '',
+            teacherId: this.editData.teacherId || '',
             classroomName: this.editData.classroomName || '',
             sortOrder: this.editData.sortOrder || 1,
             status: this.editData.status ?? 1,
@@ -192,7 +192,7 @@
             className: '',
             stageId: '',
             gradeId: '',
-            headTeacherId: '',
+            teacherId: '',
             classroomName: '',
             sortOrder: 1,
             status: 1,

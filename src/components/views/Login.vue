@@ -127,10 +127,7 @@
                   // 保存token
                   sessionStorage.setItem('accessToken', response.data.accessToken);
                   sessionStorage.setItem('refreshToken', response.data.refreshToken);
-                  // sessionStorage.setItem(
-                  //   "userInfo",
-                  //   JSON.stringify(response.data.user)
-                  // );
+                  sessionStorage.setItem('userInfo', JSON.stringify(response.data));
 
                   // 记住我功能
                   if (this.rememberMe) {

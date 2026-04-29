@@ -5,9 +5,13 @@
       <!-- Logo区域 -->
       <div class="logo">
         <div class="logo-icon">
-          <span>兴</span>
+          <img v-if="platformLogoUrl" :src="platformLogoUrl" class="platform-logo-img" />
+          <span v-else>兴</span>
         </div>
-        <span v-if="!isCollapsed" class="logo-text">智慧教育云平台</span>
+        <div v-if="!isCollapsed" class="logo-info">
+          <span class="logo-text" :title="platformName">{{ platformName }}</span>
+          <span v-if="platformDescription" class="logo-description">{{ platformDescription }}</span>
+        </div>
       </div>
 
       <!-- 菜单 -->
@@ -70,11 +74,11 @@
         <!-- 右侧工具栏 -->
         <div class="toolbar">
           <!-- 消息通知 -->
-          <div class="toolbar-item">
+          <!-- <div class="toolbar-item">
             <el-badge :value="3" class="badge-item">
               <i class="el-icon-bell"></i>
             </el-badge>
-          </div>
+          </div> -->
 
           <!-- 用户下拉菜单 -->
           <div class="toolbar-item user-dropdown">
@@ -83,7 +87,7 @@
                 <div class="user-avatar">
                   <i class="el-icon-user-solid"></i>
                 </div>
-                <span class="username">{{ userInfo.username || 'admin' }}</span>
+                <span class="username">{{ userInfo.realName || 'admin' }}</span>
                 <i class="el-icon-arrow-down"></i>
               </div>
               <el-dropdown-menu slot="dropdown" class="user-dropdown-menu">
@@ -93,7 +97,7 @@
                   </div>
                   <div class="dropdown-user-info">
                     <div class="dropdown-username">
-                      {{ userInfo.username || 'admin' }}
+                      {{ userInfo.realName || 'admin' }}
                     </div>
                     <div class="dropdown-role">
                       {{ userInfo.role || '超级管理员' }}
@@ -136,6 +140,7 @@
 
 <script>
   import auth from '@/api/auth';
+  import systemConfig from '@/api/systemConfig';
   export default {
     name: 'Layout',
     data() {
@@ -147,6 +152,9 @@
           role: '超级管理员',
           avatar: '',
         },
+        platformName: '智慧教育云平台',
+        platformDescription: '',
+        platformLogoUrl: '',
         menuItems: [
           { path: '/', icon: 'el-icon-s-home', title: '首页', expanded: false },
           {
@@ -205,13 +213,14 @@
       };
     },
     created() {
-      // 获取用户信息
-      // const storedUserInfo = sessionStorage.getItem("userInfo");
-      // if (storedUserInfo) {
-      //   this.userInfo = JSON.parse(storedUserInfo);
-      // }
       this.updateBreadcrumbs();
       this.initMenuExpanded();
+      this.loadPlatformInfo();
+      this.userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+      window.addEventListener('platformInfoUpdated', this.handlePlatformInfoUpdated);
+    },
+    beforeDestroy() {
+      window.removeEventListener('platformInfoUpdated', this.handlePlatformInfoUpdated);
     },
     watch: {
       $route() {
@@ -327,6 +336,51 @@
           })
           .catch(() => {});
       },
+
+      async loadPlatformInfo() {
+        try {
+          const response = await systemConfig.getPlatformImage();
+          if (response && response.data && response.data.url) {
+            this.platformLogoUrl = `${window.businessURL}${response.data.url}`;
+          }
+
+          const listResponse = await systemConfig.list();
+          if (listResponse && listResponse.data) {
+            const configs = listResponse.data;
+            const systemNameConfig = configs.find(item => item.configName === '系统名称');
+            const systemDescriptionConfig = configs.find(item => item.configName === '系统简介');
+
+            if (systemNameConfig && systemNameConfig.configValue) {
+              this.platformName = systemNameConfig.configValue;
+              localStorage.setItem('platformName', systemNameConfig.configValue);
+            }
+            if (systemDescriptionConfig && systemDescriptionConfig.configValue) {
+              this.platformDescription = systemDescriptionConfig.configValue;
+              localStorage.setItem('platformDescription', systemDescriptionConfig.configValue);
+            }
+          }
+        } catch (error) {
+          console.error('获取平台信息失败:', error);
+        }
+      },
+
+      handlePlatformInfoUpdated() {
+        const storedLogoUrl = localStorage.getItem('platformLogoUrl');
+        const storedPlatformName = localStorage.getItem('platformName');
+        const storedPlatformDescription = localStorage.getItem('platformDescription');
+
+        if (storedLogoUrl) {
+          // 添加时间戳参数，强制浏览器刷新图片缓存
+          const timestamp = Date.now();
+          this.platformLogoUrl = `${storedLogoUrl}?t=${timestamp}`;
+        }
+        if (storedPlatformName) {
+          this.platformName = storedPlatformName;
+        }
+        if (storedPlatformDescription) {
+          this.platformDescription = storedPlatformDescription;
+        }
+      },
     },
   };
 </script>
@@ -342,7 +396,7 @@
   .sidebar {
     width: 220px;
     // background: linear-gradient(180deg, #1a237e 0%, #283593 100%);
-    background: #3165D2;
+    background: #3165d2;
     display: flex;
     flex-direction: column;
     padding: 16px 0;
@@ -356,6 +410,10 @@
       .logo {
         justify-content: center;
         padding: 0;
+
+        .logo-info {
+          display: none;
+        }
 
         .logo-text {
           display: none;
@@ -395,7 +453,7 @@
 
           .menu-title {
             display: none;
-            color:#fff;
+            color: #fff;
           }
         }
       }
@@ -420,6 +478,13 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         flex-shrink: 0;
 
+        .platform-logo-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 8px;
+        }
+
         span {
           font-size: 20px;
           font-weight: bold;
@@ -427,11 +492,30 @@
         }
       }
 
+      .logo-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
       .logo-text {
         font-size: 14px;
         font-weight: 600;
         color: #fff;
         white-space: nowrap;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .logo-description {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
       }
     }
 
@@ -493,7 +577,7 @@
               font-size: 14px;
               white-space: nowrap;
               flex: 1;
-              color:#fff;
+              color: #fff;
             }
 
             .expand-icon {
@@ -538,13 +622,13 @@
               padding: 0 12px;
               border-radius: 6px;
               margin-top: 2px;
-                  display: flex;
-    align-items: center;
-    justify-content: center;
+              display: flex;
+              align-items: center;
+              justify-content: center;
               .menu-title {
                 font-size: 14px;
                 white-space: nowrap;
-                color:#fff;
+                color: #fff;
               }
 
               &:hover {
@@ -556,10 +640,10 @@
                 // background: #4f7cff;
                 // color: #fff;
                 background: white;
-    color: #3165D2;
-    .menu-title {
-      color: #3165D2;
-    }
+                color: #3165d2;
+                .menu-title {
+                  color: #3165d2;
+                }
               }
             }
           }

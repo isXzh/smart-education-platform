@@ -3,11 +3,7 @@
     <!-- 面包屑 -->
     <div class="mb-6">
       <div class="text-sm text-gray-500">
-        <span
-          class="text-blue-600 cursor-pointer"
-          @click="$router.push('/system')"
-          >系统管理</span
-        >
+        <span class="text-blue-600 cursor-pointer" @click="$router.push('/system')">系统管理</span>
         <span class="mx-2">/</span>
         <span class="text-gray-700">系统配置</span>
       </div>
@@ -19,9 +15,7 @@
       <div class="p-6 border-b border-gray-100">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center"
-            >
+            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <i class="el-icon-setting text-blue-600 text-lg"></i>
             </div>
             <div>
@@ -29,9 +23,7 @@
             </div>
           </div>
           <el-tooltip content="查看帮助文档" placement="top">
-            <i
-              class="el-icon-question text-gray-400 text-xl cursor-pointer hover:text-blue-500"
-            ></i>
+            <i class="el-icon-question text-gray-400 text-xl cursor-pointer hover:text-blue-500"></i>
           </el-tooltip>
         </div>
       </div>
@@ -39,18 +31,14 @@
       <!-- 标签页内容 -->
       <div class="p-6">
         <!-- 自定义标签页 -->
-        <div
-          class="flex items-center gap-2 mb-8 bg-gray-100 p-1 rounded-lg w-fit"
-        >
+        <div class="flex items-center gap-2 mb-8 bg-gray-100 p-1 rounded-lg w-fit">
           <div
             v-for="tab in tabList"
             :key="tab.key"
-            @click="activeTab = tab.key"
+            @click="handleTabChange(tab.key)"
             :class="[
               'px-6 py-2 rounded-md text-sm font-medium cursor-pointer transition-all duration-200',
-              activeTab === tab.key
-                ? 'bg-white text-gray-800 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700',
+              activeTab === tab.key ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700',
             ]"
           >
             {{ tab.label }}
@@ -63,10 +51,7 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 自动入会提前时间
-                <el-tooltip
-                  content="设置会议开始前多久自动加入会议"
-                  placement="top"
-                >
+                <el-tooltip content="设置会议开始前多久自动加入会议" placement="top">
                   <i class="el-icon-question text-gray-400 ml-1"></i>
                 </el-tooltip>
               </label>
@@ -76,33 +61,20 @@
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                设备状态刷新间隔
-              </label>
+              <label class="block text-sm font-medium text-gray-700 mb-2"> 设备状态刷新间隔 </label>
               <div class="flex items-center gap-2">
-                <el-input
-                  v-model="config.deviceRefreshInterval"
-                  style="width: 120px"
-                />
+                <el-input v-model="config.deviceRefreshInterval" style="width: 120px" />
                 <span class="text-gray-500 text-sm">秒</span>
               </div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-8">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                排课冲突检测
-              </label>
-              <el-switch
-                v-model="config.conflictCheck"
-                active-text="已启用"
-                inactive-text="已禁用"
-              />
+              <label class="block text-sm font-medium text-gray-700 mb-2"> 排课冲突检测 </label>
+              <el-switch v-model="config.conflictCheck" active-text="已启用" inactive-text="已禁用" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                日志保留时间
-              </label>
+              <label class="block text-sm font-medium text-gray-700 mb-2"> 日志保留时间 </label>
               <div class="flex items-center gap-2">
                 <el-input v-model="config.logRetention" style="width: 120px" />
                 <span class="text-gray-500 text-sm">个月</span>
@@ -110,9 +82,7 @@
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              默认会议服务商
-            </label>
+            <label class="block text-sm font-medium text-gray-700 mb-2"> 默认会议服务商 </label>
             <el-select v-model="config.meetingProvider" style="width: 240px">
               <el-option label="无" value="none" />
               <el-option label="华为云" value="huawei" />
@@ -124,33 +94,44 @@
         <!-- 界面与主题 -->
         <div v-if="activeTab === 'theme'" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-3"
-              >平台名称</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-3">平台名称</label>
+            <el-input v-model="config.platformName" style="width: 400px" placeholder="请输入平台名称" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-3">平台简介</label>
             <el-input
-              v-model="config.platformName"
+              v-model="config.platformDescription"
+              type="textarea"
+              :rows="3"
               style="width: 400px"
-              placeholder="请输入平台名称"
+              placeholder="请输入平台简介"
+              maxlength="200"
+              show-word-limit
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-3"
-              >平台Logo</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-3">平台Logo</label>
             <div class="flex items-center gap-4">
               <div
-                class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50"
+                class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden cursor-pointer hover:border-blue-500 transition-all"
+                @click="handleLogoClick"
               >
-                <i class="el-icon-upload text-2xl text-gray-400"></i>
+                <img v-if="config.logoUrl" :src="config.logoUrl" class="w-full h-full object-cover" />
+                <i v-else class="el-icon-upload text-2xl text-gray-400"></i>
               </div>
               <div>
-                <el-button type="default" size="small" icon="el-icon-upload2"
+                <el-button type="default" size="small" icon="el-icon-upload2" @click="handleLogoClick"
                   >上传图片</el-button
                 >
-                <p class="text-xs text-gray-500 mt-2">
-                  支持 JPG、PNG 格式，大小不超过 2MB
-                </p>
+                <p class="text-xs text-gray-500 mt-2">支持 JPG、JPEG、PNG、GIF、WEBP 格式，大小不超过 2MB</p>
               </div>
+              <input
+                ref="logoInput"
+                type="file"
+                accept=".jpg,.jpeg,.png,.gif,.webp"
+                style="display: none"
+                @change="handleLogoChange"
+              />
             </div>
           </div>
           <!-- <div>
@@ -199,42 +180,29 @@
         <div v-if="activeTab === 'sync'" class="space-y-6">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-base font-medium text-gray-800">
-                企业通讯录同步
-              </h3>
+              <h3 class="text-base font-medium text-gray-800">企业通讯录同步</h3>
             </div>
             <el-switch v-model="config.enterpriseSync" />
           </div>
 
-          <div
-            v-show="config.enterpriseSync"
-            class="bg-gray-50 rounded-lg p-6 space-y-6 transition-all"
-          >
+          <div v-show="config.enterpriseSync" class="bg-gray-50 rounded-lg p-6 space-y-6 transition-all">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >同步周期</label
-              >
+              <label class="block text-sm font-medium text-gray-700 mb-2">同步周期</label>
               <div class="flex items-center gap-2">
                 <el-input v-model="config.syncPeriod" style="width: 120px" />
                 <span class="text-gray-500 text-sm">小时</span>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >手动同步</label
-              >
-              <el-button type="default" icon="el-icon-refresh"
-                >立即同步</el-button
-              >
+              <label class="block text-sm font-medium text-gray-700 mb-2">手动同步</label>
+              <el-button type="default" icon="el-icon-refresh">立即同步</el-button>
             </div>
           </div>
 
           <div class="bg-blue-50 rounded-lg p-4">
             <div class="flex items-start gap-2">
               <i class="el-icon-info text-blue-500 mt-0.5"></i>
-              <p class="text-sm text-blue-700">
-                同步教师/学生信息至第三方会议系统通讯录。
-              </p>
+              <p class="text-sm text-blue-700">同步教师/学生信息至第三方会议系统通讯录。</p>
             </div>
           </div>
         </div>
@@ -242,42 +210,28 @@
         <!-- 通知配置 -->
         <div v-if="activeTab === 'notification'" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >上课提醒提前时间</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-2">上课提醒提前时间</label>
             <div class="flex items-center gap-2">
               <el-input v-model="config.reminderTime" style="width: 120px" />
               <span class="text-gray-500 text-sm">分钟</span>
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-3"
-              >上课提醒方式</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-3">上课提醒方式</label>
             <div class="space-y-3">
-              <el-checkbox v-model="config.reminderMethods.internal"
-                >站内信</el-checkbox
-              >
+              <el-checkbox v-model="config.reminderMethods.internal">站内信</el-checkbox>
               <div>
-                <el-checkbox v-model="config.reminderMethods.sms" disabled
-                  >短信（后续扩展）</el-checkbox
-                >
+                <el-checkbox v-model="config.reminderMethods.sms" disabled>短信（后续扩展）</el-checkbox>
               </div>
               <div>
-                <el-checkbox v-model="config.reminderMethods.email" disabled
-                  >邮件（后续扩展）</el-checkbox
-                >
+                <el-checkbox v-model="config.reminderMethods.email" disabled>邮件（后续扩展）</el-checkbox>
               </div>
             </div>
           </div>
-          <div
-            class="flex items-center justify-between pt-4 border-t border-gray-100"
-          >
+          <div class="flex items-center justify-between pt-4 border-t border-gray-100">
             <div>
               <h3 class="text-base font-medium text-gray-800">互动通知</h3>
-              <p class="text-sm text-gray-500 mt-1">
-                教师端接收学生举手、辅讲教室请求通知
-              </p>
+              <p class="text-sm text-gray-500 mt-1">教师端接收学生举手、辅讲教室请求通知</p>
             </div>
             <el-switch v-model="config.interactiveNotification" />
           </div>
@@ -285,31 +239,15 @@
       </div>
 
       <!-- 底部操作栏 -->
-      <div
-        class="px-6 btm-box py-4 border-t border-gray-100 bg-gray-50 rounded-b-lg"
-      >
+      <div class="px-6 btm-box py-4 border-t border-gray-100 bg-gray-50 rounded-b-lg">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <el-button type="default" icon="el-icon-upload2"
-              >导入配置</el-button
-            >
-            <el-button type="default" icon="el-icon-download"
-              >导出配置</el-button
-            >
+            <el-button type="default" icon="el-icon-upload2">导入配置</el-button>
+            <el-button type="default" icon="el-icon-download">导出配置</el-button>
           </div>
           <div class="flex items-center gap-3">
-            <el-button
-              type="default"
-              icon="el-icon-refresh-right"
-              @click="handleReset"
-              >重置</el-button
-            >
-            <el-button
-              type="primary"
-              icon="el-icon-document-checked"
-              @click="handleSave"
-              >保存配置</el-button
-            >
+            <el-button type="default" icon="el-icon-refresh-right" @click="handleReset">重置</el-button>
+            <el-button type="primary" icon="el-icon-document-checked" @click="handleSave">保存配置</el-button>
           </div>
         </div>
       </div>
@@ -318,87 +256,396 @@
 </template>
 
 <script>
-export default {
-  name: "SystemConfig",
-  data() {
-    return {
-      activeTab: "general",
-      tabList: [
-        { key: "general", label: "通用配置" },
-        { key: "theme", label: "界面与主题" },
-        { key: "sync", label: "数据同步" },
-        { key: "notification", label: "通知配置" },
-      ],
-      presetColors: [
-        "#1E88E5",
-        "#26A69A",
-        "#66BB6A",
-        "#FFA726",
-        "#AB47BC",
-        "#EF5350",
-      ],
-      config: {
-        // 通用配置
-        autoJoinTime: 5,
-        deviceRefreshInterval: 30,
-        conflictCheck: true,
-        logRetention: 12,
-        meetingProvider: "none",
-        // 界面与主题
-        platformName: "兴图新科智慧教育云平台",
-        themeColor: "#1E88E5",
-        // 数据同步
-        enterpriseSync: false,
-        syncPeriod: 24,
-        // 通知配置
-        reminderTime: 10,
-        reminderMethods: {
-          internal: true,
-          sms: false,
-          email: false,
+  import systemConfig from '@/api/systemConfig.js';
+
+  export default {
+    name: 'SystemConfig',
+    data() {
+      return {
+        activeTab: 'general',
+        tabList: [
+          { key: 'general', label: '通用配置' },
+          { key: 'theme', label: '界面与主题' },
+          { key: 'sync', label: '数据同步' },
+          { key: 'notification', label: '通知配置' },
+        ],
+        presetColors: ['#1E88E5', '#26A69A', '#66BB6A', '#FFA726', '#AB47BC', '#EF5350'],
+        config: {
+          // 通用配置
+          autoJoinTime: 5,
+          deviceRefreshInterval: 30,
+          conflictCheck: true,
+          logRetention: 12,
+          meetingProvider: 'none',
+          // 界面与主题
+          platformName: '兴图新科智慧教育云平台',
+          platformDescription: '',
+          themeColor: '#1E88E5',
+          logoUrl: '',
+          // 数据同步
+          enterpriseSync: false,
+          syncPeriod: 24,
+          // 通知配置
+          reminderTime: 10,
+          reminderMethods: {
+            internal: true,
+            sms: false,
+            email: false,
+          },
+          interactiveNotification: true,
         },
-        interactiveNotification: true,
+        logoUploading: false,
+        originalConfig: null,
+        configKeyMap: {
+          autoJoinTime: null,
+          deviceRefreshInterval: null,
+          conflictCheck: null,
+          logRetention: null,
+          reminderTime: null,
+          platformName: null,
+          platformDescription: null,
+        },
+      };
+    },
+    async created() {
+      await this.loadConfig();
+      this.saveOriginalConfig();
+    },
+    methods: {
+      async loadConfig() {
+        try {
+          const response = await systemConfig.list();
+          if (response && response.data) {
+            const configs = response.data;
+
+            const autoJoinTimeConfig = configs.find(item => item.configName === '自动入会提前时间');
+            const deviceRefreshIntervalConfig = configs.find(item => item.configName === '设备刷新间隔(秒)');
+            const conflictCheckConfig = configs.find(item => item.configName === '冲突检测开关');
+            const logRetentionConfig = configs.find(item => item.configName === '日志保留天数');
+            const reminderTimeConfig = configs.find(item => item.configName === '上课提醒提前时间');
+
+            if (autoJoinTimeConfig) {
+              if (autoJoinTimeConfig.configValue) {
+                this.config.autoJoinTime = parseInt(autoJoinTimeConfig.configValue) || 5;
+              }
+              this.configKeyMap.autoJoinTime = autoJoinTimeConfig.configKey;
+            }
+            if (deviceRefreshIntervalConfig) {
+              if (deviceRefreshIntervalConfig.configValue) {
+                this.config.deviceRefreshInterval = parseInt(deviceRefreshIntervalConfig.configValue) || 30;
+              }
+              this.configKeyMap.deviceRefreshInterval = deviceRefreshIntervalConfig.configKey;
+            }
+            if (conflictCheckConfig) {
+              if (conflictCheckConfig.configValue) {
+                this.config.conflictCheck =
+                  conflictCheckConfig.configValue === 'true' || conflictCheckConfig.configValue === '1';
+              }
+              this.configKeyMap.conflictCheck = conflictCheckConfig.configKey;
+            }
+            if (logRetentionConfig) {
+              if (logRetentionConfig.configValue) {
+                this.config.logRetention = parseInt(logRetentionConfig.configValue) || 12;
+              }
+              this.configKeyMap.logRetention = logRetentionConfig.configKey;
+            }
+            if (reminderTimeConfig) {
+              if (reminderTimeConfig.configValue) {
+                this.config.reminderTime = parseInt(reminderTimeConfig.configValue) || 10;
+              }
+              this.configKeyMap.reminderTime = reminderTimeConfig.configKey;
+            }
+
+            const systemNameConfig = configs.find(item => item.configName === '系统名称');
+            const systemDescriptionConfig = configs.find(item => item.configName === '系统简介');
+
+            if (systemNameConfig) {
+              if (systemNameConfig.configValue) {
+                this.config.platformName = systemNameConfig.configValue;
+              }
+              this.configKeyMap.platformName = systemNameConfig.configKey;
+            }
+            if (systemDescriptionConfig) {
+              if (systemDescriptionConfig.configValue) {
+                this.config.platformDescription = systemDescriptionConfig.configValue;
+              }
+              this.configKeyMap.platformDescription = systemDescriptionConfig.configKey;
+            }
+
+            try {
+              const imageResponse = await systemConfig.getPlatformImage();
+              if (imageResponse && imageResponse.data && imageResponse.data.url) {
+                // this.config.logoUrl = imageResponse.data.logoUrl;
+                // this.config.logoUrl = '';
+                this.$set(this.config, 'logoUrl', `${window.businessURL}${imageResponse.data.url}`);
+                // this.config.logoUrl = `${window.businessURL}${imageResponse.data.url}`;
+              }
+            } catch (error) {
+              console.error('获取平台Logo失败:', error);
+            }
+          }
+        } catch (error) {
+          console.error('加载配置失败:', error);
+          this.$message.error('加载配置失败，请重试');
+        }
       },
-    };
-  },
-  methods: {
-    handleSave() {
-      this.$message.success("配置保存成功");
+      saveOriginalConfig() {
+        this.originalConfig = JSON.parse(JSON.stringify(this.config));
+      },
+
+      checkHasUnsavedChanges() {
+        if (!this.originalConfig) return false;
+
+        switch (this.activeTab) {
+          case 'general':
+            return (
+              this.config.autoJoinTime !== this.originalConfig.autoJoinTime ||
+              this.config.deviceRefreshInterval !== this.originalConfig.deviceRefreshInterval ||
+              this.config.conflictCheck !== this.originalConfig.conflictCheck ||
+              this.config.logRetention !== this.originalConfig.logRetention ||
+              this.config.meetingProvider !== this.originalConfig.meetingProvider
+            );
+          case 'theme':
+            return (
+              this.config.platformName !== this.originalConfig.platformName ||
+              this.config.platformDescription !== this.originalConfig.platformDescription ||
+              this.config.logoUrl !== this.originalConfig.logoUrl
+            );
+          case 'sync':
+            return (
+              this.config.enterpriseSync !== this.originalConfig.enterpriseSync ||
+              this.config.syncPeriod !== this.originalConfig.syncPeriod
+            );
+          case 'notification':
+            return (
+              this.config.reminderTime !== this.originalConfig.reminderTime ||
+              this.config.reminderMethods.internal !== this.originalConfig.reminderMethods.internal ||
+              this.config.interactiveNotification !== this.originalConfig.interactiveNotification
+            );
+          default:
+            return false;
+        }
+      },
+
+      handleTabChange(tabKey) {
+        if (this.checkHasUnsavedChanges()) {
+          this.$confirm('当前标签页有未保存的配置更改，切换标签页将丢失这些更改。是否继续？', '有未保存的更改', {
+            confirmButtonText: '继续',
+            cancelButtonText: '取消',
+            type: 'warning',
+          })
+            .then(() => {
+              this.activeTab = tabKey;
+              this.saveOriginalConfig();
+            })
+            .catch(() => {
+              return false;
+            });
+        } else {
+          this.activeTab = tabKey;
+        }
+      },
+
+      async updatePlatformInfo() {
+        try {
+          if (this.config.platformName) {
+            localStorage.setItem('platformName', this.config.platformName);
+          }
+          if (this.config.platformDescription) {
+            localStorage.setItem('platformDescription', this.config.platformDescription);
+          }
+          if (this.config.logoUrl) {
+            localStorage.setItem('platformLogoUrl', this.config.logoUrl);
+          }
+          window.dispatchEvent(new Event('platformInfoUpdated'));
+        } catch (error) {
+          console.error('更新平台信息失败:', error);
+        }
+      },
+
+      handleLogoClick() {
+        this.$refs.logoInput.click();
+      },
+      async handleLogoChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const maxSize = 2 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+          this.$message.error('只支持 JPG、JPEG、PNG、GIF、WEBP 格式的图片');
+          event.target.value = '';
+          return;
+        }
+
+        if (file.size > maxSize) {
+          this.$message.error('图片大小不能超过 2MB');
+          event.target.value = '';
+          return;
+        }
+
+        try {
+          this.logoUploading = true;
+          const formData = new FormData();
+          formData.append('file', file);
+
+          await systemConfig.uploadLogo(formData);
+
+          const imageResponse = await systemConfig.getPlatformImage();
+          if (imageResponse && imageResponse.data && imageResponse.data.url) {
+            // 添加时间戳参数，强制浏览器刷新图片缓存
+            const timestamp = Date.now();
+            const logoUrl = `${window.businessURL}${imageResponse.data.url}?t=${timestamp}`;
+            this.$set(this.config, 'logoUrl', logoUrl);
+            this.updatePlatformInfo();
+            this.$message.success('Logo 上传成功');
+          } else {
+            this.config.logoUrl = '';
+            this.$message.success('Logo 上传成功');
+          }
+        } catch (error) {
+          console.error('上传 Logo 失败:', error);
+          this.$message.error('上传 Logo 失败，请重试');
+        } finally {
+          this.logoUploading = false;
+          event.target.value = '';
+        }
+      },
+      async handleSave() {
+        try {
+          const configUpdates = [];
+
+          if (this.activeTab === 'general') {
+            if (this.configKeyMap.autoJoinTime) {
+              configUpdates.push({
+                configKey: this.configKeyMap.autoJoinTime,
+                configName: '自动入会提前时间',
+                configValue: String(this.config.autoJoinTime),
+              });
+            }
+            if (this.configKeyMap.deviceRefreshInterval) {
+              configUpdates.push({
+                configKey: this.configKeyMap.deviceRefreshInterval,
+                configName: '设备刷新间隔(秒)',
+                configValue: String(this.config.deviceRefreshInterval),
+              });
+            }
+            if (this.configKeyMap.conflictCheck) {
+              configUpdates.push({
+                configKey: this.configKeyMap.conflictCheck,
+                configName: '冲突检测开关',
+                configValue: String(this.config.conflictCheck ? '1' : '0'),
+              });
+            }
+            if (this.configKeyMap.logRetention) {
+              configUpdates.push({
+                configKey: this.configKeyMap.logRetention,
+                configName: '日志保留天数',
+                configValue: String(this.config.logRetention),
+              });
+            }
+          } else if (this.activeTab === 'theme') {
+            if (this.configKeyMap.platformName) {
+              configUpdates.push({
+                configKey: this.configKeyMap.platformName,
+                configName: '系统名称',
+                configValue: this.config.platformName,
+              });
+            }
+            if (this.configKeyMap.platformDescription) {
+              configUpdates.push({
+                configKey: this.configKeyMap.platformDescription,
+                configName: '系统简介',
+                configValue: this.config.platformDescription,
+              });
+            }
+          } else if (this.activeTab === 'notification') {
+            if (this.configKeyMap.reminderTime) {
+              configUpdates.push({
+                configKey: this.configKeyMap.reminderTime,
+                configName: '上课提醒提前时间',
+                configValue: String(this.config.reminderTime),
+              });
+            }
+          }
+
+          // if (configUpdates.length > 0) {
+          //   await systemConfig.batchUpdate(configUpdates);
+          // }
+
+          if (this.activeTab === 'theme') {
+            // 调用 updatePlatformInfo 接口保存系统名称和系统简介
+            const platformInfoData = {
+              systemName: this.config.platformName,
+              systemIntroduction: this.config.platformDescription
+            };
+            await systemConfig.updatePlatformInfo(platformInfoData);
+            this.updatePlatformInfo();
+          }
+
+          this.saveOriginalConfig();
+          this.$message.success('配置保存成功');
+        } catch (error) {
+          console.error('保存配置失败:', error);
+          this.$message.error('保存配置失败，请重试');
+        }
+      },
+      handleReset() {
+        this.$confirm('确定要重置所有配置吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).then(() => {
+          this.config = {
+            autoJoinTime: 5,
+            deviceRefreshInterval: 30,
+            conflictCheck: true,
+            logRetention: 12,
+            meetingProvider: 'none',
+            platformName: '兴图新科智慧教育云平台',
+            platformDescription: '',
+            themeColor: '#1E88E5',
+            logoUrl: '',
+            enterpriseSync: false,
+            syncPeriod: 24,
+            reminderTime: 10,
+            reminderMethods: {
+              internal: true,
+              sms: false,
+              email: false,
+            },
+            interactiveNotification: true,
+          };
+          this.saveOriginalConfig();
+          this.$message.success('配置已重置');
+        });
+      },
     },
-    handleReset() {
-      this.$confirm("确定要重置所有配置吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      }).then(() => {
-        this.$message.success("配置已重置");
-      });
-    },
-  },
-};
+  };
 </script>
 
 <style lang="scss" scoped>
-::v-deep .el-switch.is-checked .el-switch__core {
-  border-color: #10b981;
-  background-color: #10b981;
-}
+  ::v-deep .el-switch.is-checked .el-switch__core {
+    border-color: #10b981;
+    background-color: #10b981;
+  }
 
-::v-deep .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: #606266;
-}
+  ::v-deep .el-checkbox__input.is-checked + .el-checkbox__label {
+    color: #606266;
+  }
 
-::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #409eff;
-  border-color: #409eff;
-}
-.content {
-  height: 830px;
-  position: relative;
-}
-.btm-box {
-  width: 100%;
-  position: absolute;
-  bottom: 0;
-}
+  ::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
+    background-color: #409eff;
+    border-color: #409eff;
+  }
+  .content {
+    height: 830px;
+    position: relative;
+  }
+  .btm-box {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+  }
 </style>
