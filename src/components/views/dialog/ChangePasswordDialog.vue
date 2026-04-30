@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import userApi from "@/api/user.js";
 export default {
   name: 'ChangePasswordDialog',
   props: {
@@ -139,19 +140,29 @@ export default {
         this.$refs.passwordForm.resetFields()
       }
     },
-    handleSubmit() {
-      this.$refs.passwordForm.validate(valid => {
+    async handleSubmit() {
+      this.$refs.passwordForm.validate(async valid => {
         if (valid) {
           this.loading = true
 
-          // 模拟API调用
-          setTimeout(() => {
-            this.loading = false
+          try {
+            const { oldPassword, newPassword, confirmPassword } = this.passwordForm
+            await userApi.updatePassword({
+              oldPassword,
+              newPassword,
+              confirmPassword
+            })
             this.$message.success('密码修改成功')
             this.resetForm()
             this.$emit('update:visible', false)
             this.$emit('success')
-          }, 1000)
+          } catch (error) {
+            console.error('修改密码失败:', error)
+            const errorMessage = error.response?.data?.message || error.message || '密码修改失败'
+            this.$message.error(errorMessage)
+          } finally {
+            this.loading = false
+          }
         }
       })
     }

@@ -5,6 +5,10 @@ export default {
   getById(id) {
     return http.get(`/api/system/user/${id}`);
   },
+  // 修改密码
+  updatePassword(data) {
+    return http.put2(`/api/system/user/password`, data);
+  },
   // 修改用户
   update(id, data) {
     return http.put2(`/api/system/user/${id}`, data);
@@ -34,5 +38,9 @@ export default {
   // 分页查询用户
   page(params) {
     return http.post("/api/system/user/page", params);
+  },
+  // 获取个人中心信息
+  getProfileInfo() {
+    return http.get(`/api/system/user/profile`);
   },
 };

@@ -906,6 +906,7 @@
       font-size: 14px;
       color: #606266;
       line-height: 1.5;
+      justify-content: center;
 
       i {
         font-size: 16px;

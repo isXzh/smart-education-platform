@@ -176,7 +176,7 @@
 
     <div slot="footer" class="modal-footer">
       <el-button class="cancel-btn" @click="handleClose">取消</el-button>
-      <el-button type="primary" class="submit-btn" @click="handleSubmit">确认排课</el-button>
+      <el-button type="primary" class="submit-btn" v-loading="loading" @click="handleSubmit">确认排课</el-button>
     </div>
   </el-dialog>
 </template>
@@ -232,6 +232,7 @@
         classList: [],
         teacherList: [],
         periodList: [],
+        loading: false,
         statusOptions: [
           { label: '已取消', value: 0 },
           { label: '已排课', value: 1 },
@@ -481,6 +482,7 @@
         this.$refs.form.validate(async valid => {
           if (valid) {
             try {
+              this.loading = true;
               const requestData = {
                 stageId: this.form.gradeLevel,
                 gradeId: this.form.grade,
@@ -504,6 +506,7 @@
               }
 
               if (res.code === 200) {
+                this.loading = false;
                 const successMessage = this.mode === 'edit' ? '编辑成功' : '排课成功';
                 this.$message.success(successMessage);
                 this.$emit('submit', { ...this.form, mode: this.mode });

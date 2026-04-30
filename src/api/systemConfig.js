@@ -13,6 +13,10 @@ export default {
   async updateAutoJoinMinutes(data) {
     return await http.put("/api/system/config/auto-join-minutes", data);
   },
+  // 更新上课提醒提前时间
+  async updateReminderMinutes(data) {
+    return await http.put("/api/system/config/class-reminder-minutes", data);
+  },
   // 更新平台名称和简介
   async updatePlatformInfo(data) {
     return await http.put2("/api/system/config/platform-info", data);

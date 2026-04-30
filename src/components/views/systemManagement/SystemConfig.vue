@@ -561,13 +561,10 @@
               });
             }
           } else if (this.activeTab === 'notification') {
-            if (this.configKeyMap.reminderTime) {
-              configUpdates.push({
-                configKey: this.configKeyMap.reminderTime,
-                configName: '上课提醒提前时间',
-                configValue: String(this.config.reminderTime),
-              });
-            }
+            // 调用 updateReminderMinutes 接口更新上课提醒时间
+            await systemConfig.updateReminderMinutes({
+              minutes: parseInt(this.config.reminderTime) || 10
+            });
           }
 
           // if (configUpdates.length > 0) {
