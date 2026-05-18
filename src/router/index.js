@@ -18,6 +18,9 @@ import AccountManagement from '@/components/views/systemManagement/AccountManage
 import RolePermission from '@/components/views/systemManagement/RolePermission.vue';
 import SystemConfig from '@/components/views/systemManagement/SystemConfig.vue';
 import OperationLog from '@/components/views/systemManagement/OperationLog.vue';
+import resourceTags from '@/components/views/resource/resourceTags.vue';
+import resourcePersonal from '@/components/views/resource/resourcePersonal.vue';
+import resourceCommon from '@/components/views/resource/resourceCommon.vue';
 import DataBoard from '@/components/views/dataBoard/index.vue';
 import Login from '@/components/views/Login.vue';
 import Profile from '@/components/views/Profile.vue';
@@ -62,6 +65,24 @@ const routes = [
         path: 'devices-list',
         name: 'devices-list',
         component: DeviceManagement,
+      },
+      // 资源库管理-个人资源
+      {
+        path: 'resource-personal',
+        name: 'resource-personal',
+        component: resourcePersonal,
+      },
+      // 资源库管理-公共资源
+      {
+        path: 'resource-common',
+        name: 'resource-common',
+        component: resourceCommon,
+      },
+      // 资源库管理-标签管理
+      {
+        path: 'resource-tags',
+        name: 'resource-tags',
+        component: resourceTags,
       },
       // 基础信息管理-组织架构
       {

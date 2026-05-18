@@ -176,6 +176,17 @@
             children: [{ path: '/devices-list', title: '设备列表' }],
           },
           {
+            path: '/resource',
+            icon: 'el-icon-office-building',
+            title: '资源库管理',
+            expanded: true,
+            children: [
+              { path: '/resource-personal', title: '个人资源' },
+              { path: '/resource-common', title: '公共资源' },
+              { path: '/resource-tags', title: '标签管理' },
+            ],
+          },
+          {
             path: '/Information',
             icon: 'el-icon-office-building',
             title: '基础信息管理',
