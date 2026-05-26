@@ -13,10 +13,10 @@
         <el-input v-model="formData.className" placeholder="请输入班级名称" maxlength="50" show-word-limit />
       </el-form-item>
 
-      <!-- 所属学段 -->
-      <el-form-item label="所属学段" prop="stageId">
-        <el-select v-model="formData.stageId" placeholder="请选择学段" style="width: 100%" @change="handleStageChange">
-          <el-option v-for="stage in stageList" :key="stage.id" :label="stage.stageName" :value="stage.id" />
+      <!-- 关联学校 -->
+      <el-form-item label="关联学校" prop="schoolId">
+        <el-select v-model="formData.schoolId" placeholder="请选择学校" style="width: 100%" @change="handleSchoolChange">
+          <el-option v-for="school in schoolList" :key="school.id" :label="school.schoolName" :value="school.id" />
         </el-select>
       </el-form-item>
 
@@ -24,35 +24,12 @@
       <el-form-item label="所属年级" prop="gradeId">
         <el-select
           v-model="formData.gradeId"
-          placeholder="请先选择学段"
+          placeholder="请先选择学校"
           style="width: 100%"
-          :disabled="!formData.stageId"
+          :disabled="!formData.schoolId"
         >
-          <el-option v-for="grade in filteredGradeList" :key="grade.id" :label="grade.gradeName" :value="grade.id" />
+          <el-option v-for="grade in gradeList" :key="grade.id" :label="grade.gradeName" :value="grade.id" />
         </el-select>
-      </el-form-item>
-
-      <!-- 班主任 -->
-      <el-form-item label="班主任">
-        <el-select v-model="formData.teacherId" placeholder="请选择班主任" style="width: 100%" clearable>
-          <el-option
-            v-for="teacher in teacherList"
-            :key="teacher.id"
-            :label="teacher.teacherName"
-            :value="teacher.id"
-          />
-        </el-select>
-        <div class="form-tip">
-          <i class="el-icon-info"></i>
-          数据来源：教师管理中状态为"在职"的教师
-        </div>
-      </el-form-item>
-
-      <!-- 教室 -->
-      <el-form-item label="教室">
-        <el-input v-model="formData.classroomName" placeholder="请输入教室名称" maxlength="50">
-          <template slot="append">示例：101教室、实验室A等</template>
-        </el-input>
       </el-form-item>
 
       <!-- 排序 -->
@@ -106,6 +83,9 @@
 </template>
 
 <script>
+  import schoolApi from '@/api/school';
+  import baseApi from '@/api/base';
+
   export default {
     name: 'ClassDialog',
     props: {
@@ -121,27 +101,16 @@
         type: Object,
         default: null,
       },
-      stageList: {
-        type: Array,
-        default: () => [],
-      },
-      gradeList: {
-        type: Array,
-        default: () => [],
-      },
-      teacherList: {
-        type: Array,
-        default: () => [],
-      },
     },
     data() {
       return {
+        schoolList: [],
+        gradeList: [],
+        currentSchoolType: null,
         formData: {
           className: '',
-          stageId: '',
+          schoolId: '',
           gradeId: '',
-          teacherId: '',
-          classroomName: '',
           sortOrder: 1,
           status: 1,
           remark: '',
@@ -151,7 +120,7 @@
             { required: true, message: '请输入班级名称', trigger: 'blur' },
             { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' },
           ],
-          stageId: [{ required: true, message: '请选择所属学段', trigger: 'change' }],
+          schoolId: [{ required: true, message: '请选择关联学校', trigger: 'change' }],
           gradeId: [{ required: true, message: '请选择所属年级', trigger: 'change' }],
           sortOrder: [
             { required: true, message: '请输入排序号', trigger: 'blur' },
@@ -161,50 +130,79 @@
         },
       };
     },
-    computed: {
-      filteredGradeList() {
-        if (!this.formData.stageId) return [];
-        return this.gradeList.filter(grade => grade.stageId === this.formData.stageId);
-      },
-    },
     watch: {
       visible(val) {
         if (val) {
+          this.loadSchoolList();
           this.initForm();
         }
       },
     },
     methods: {
+      async loadSchoolList() {
+        try {
+          const res = await schoolApi.page();
+          this.schoolList = res.data?.list || [];
+        } catch (error) {
+          console.error('加载学校列表失败:', error);
+        }
+      },
+      async loadGradeList(schoolType) {
+        try {
+          const res = await baseApi.listBySchoolType({ schoolType });
+          this.gradeList = res.data || [];
+        } catch (error) {
+          console.error('加载年级列表失败:', error);
+          this.gradeList = [];
+        }
+      },
+      async handleSchoolChange(schoolId) {
+        this.formData.gradeId = '';
+        this.gradeList = [];
+        if (!schoolId) {
+          this.currentSchoolType = null;
+          return;
+        }
+        const selectedSchool = this.schoolList.find(s => s.id === schoolId);
+        if (selectedSchool && selectedSchool.schoolType != null) {
+          this.currentSchoolType = selectedSchool.schoolType;
+          await this.loadGradeList(selectedSchool.schoolType);
+        }
+      },
       initForm() {
         if (this.editData) {
           this.formData = {
             className: this.editData.className || '',
-            stageId: this.editData.stageId || '',
+            schoolId: this.editData.schoolId || '',
             gradeId: this.editData.gradeId || '',
-            teacherId: this.editData.teacherId || '',
-            classroomName: this.editData.classroomName || '',
             sortOrder: this.editData.sortOrder || 1,
             status: this.editData.status ?? 1,
             remark: this.editData.remark || '',
           };
+          if (this.editData.schoolId) {
+            this.$nextTick(() => {
+              const selectedSchool = this.schoolList.find(s => s.id === this.editData.schoolId);
+              if (selectedSchool && selectedSchool.schoolType != null) {
+                this.currentSchoolType = selectedSchool.schoolType;
+                this.loadGradeList(selectedSchool.schoolType);
+              }
+            });
+          }
         } else {
           this.formData = {
             className: '',
-            stageId: '',
+            schoolId: '',
             gradeId: '',
-            teacherId: '',
-            classroomName: '',
             sortOrder: 1,
             status: 1,
             remark: '',
           };
+          this.gradeList = [];
+          this.currentSchoolType = null;
         }
         this.$nextTick(() => {
           this.$refs.form && this.$refs.form.clearValidate();
         });
-      },
-      handleStageChange() {
-        this.formData.gradeId = '';
       },
       handleClose() {
         this.$emit('update:visible', false);

@@ -41,4 +41,32 @@ export default {
   async batchDelete(ids) {
     return await http.delete('/api/device/batch', ids);
   },
+  // 软终端-分页查询账号
+  async pageMembers(params) {
+    return await http.get('/api/device/members', params);
+  },
+  // 软终端-新增账号
+  async addMembers(data) {
+    return await http.post('/api/device/members', data);
+  },
+  // 软终端-批量删除账号
+  async deleteMembers(data) {
+    return await http.deleteData('/api/device/members', data);
+  },
+  // 刷新华为云会议组织目录缓存
+  async refreshDeptTree() {
+    return await http.post('/api/device/dept-tree/refresh');
+  },
+  // 硬终端-分页查询终端设备
+  async hardDevices(params) {
+    return await http.get('/api/device/hard-devices', params);
+  },
+  // 查询华为云会议组织目录
+  async deptTree() {
+    return await http.get('/api/device/dept-tree');
+  },
+  // 查询所有软硬终端账号
+  async allMembers() {
+    return await http.get('/api/device/all-members');
+  },
 };

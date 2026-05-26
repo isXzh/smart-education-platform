@@ -246,12 +246,11 @@
     </div>
 
     <!-- 添加/编辑组织弹窗 -->
-    <organization-dialog
+    <org-node-dialog
       :visible.sync="orgDialogVisible"
-      :title="orgDialogTitle"
-      :is-sub-org-mode="isSubOrgMode"
-      :parent-org="selectedParentOrg"
-      :currentOrg="currentOrg"
+      :mode="orgDialogMode"
+      :parent-node="selectedParentOrg"
+      :current-node="currentOrg"
       :edit-data="editOrgData"
       @confirm="handleOrgConfirm"
     />
@@ -259,13 +258,13 @@
 </template>
 
 <script>
-  import OrganizationDialog from '../dialog/OrganizationDialog.vue';
+  import OrgNodeDialog from './dialog/OrgNodeDialog.vue';
   import orgStructureApi from '@/api/orgStructure.js';
 
   export default {
     name: 'OrganizationalStructure',
     components: {
-      OrganizationDialog,
+      OrgNodeDialog,
     },
     data() {
       return {
@@ -276,8 +275,7 @@
         expandedKeys: [],
         activeDropdown: null,
         orgDialogVisible: false,
-        orgDialogTitle: '添加组织',
-        isSubOrgMode: false,
+        orgDialogMode: 'add',
         selectedParentOrg: {},
         editOrgData: null,
         currentKey: '',
@@ -451,16 +449,15 @@
           this.$message.warning('请先选择一个组织作为父级');
           return;
         }
-        this.isSubOrgMode = true;
-        this.orgDialogTitle = '添加组织';
+        this.orgDialogMode = 'addSub';
+        this.selectedParentOrg = { ...this.currentOrg };
         this.editOrgData = null;
         this.orgDialogVisible = true;
       },
 
       // 处理添加下级组织
       handleAddSubOrg(data) {
-        this.isSubOrgMode = true;
-        this.orgDialogTitle = `添加下级组织 - ${data.orgName}`;
+        this.orgDialogMode = 'addSub';
         this.selectedParentOrg = { ...data };
         this.editOrgData = null;
         this.orgDialogVisible = true;
@@ -468,8 +465,7 @@
 
       // 处理编辑组织
       async handleEditOrg(data) {
-        this.isSubOrgMode = true;
-        this.orgDialogTitle = '编辑组织';
+        this.orgDialogMode = 'edit';
         this.editOrgData = await this.getById(data.id);
         this.orgDialogVisible = true;
       },
@@ -537,7 +533,7 @@
             this.$message.success(this.editOrgData ? '编辑成功' : '添加成功');
             await this.loadOrgTree();
             // 如果是添加下级，展开父节点并选中新添加的组织
-            if (this.isSubOrgMode && this.selectedParentOrg.id) {
+            if (this.orgDialogMode === 'addSub' && this.selectedParentOrg.id) {
               this.expandedKeys.push(this.selectedParentOrg.id.toString());
             }
             this.tableList = await this.loadChildren();

@@ -102,17 +102,7 @@
                 ></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium text-sm text-gray-900 truncate">{{ category.name }}</span>
-                  <el-tag
-                    v-if="category.status === 'disabled'"
-                    size="mini"
-                    class="!bg-gray-100 !text-gray-500 !border-gray-200 !text-[10px]"
-                  >禁用</el-tag>
-                </div>
-                <div class="text-xs text-gray-400 truncate">
-                  {{ category.grandparentName }} · {{ category.parentName }}
-                </div>
+                <span class="font-medium text-sm text-gray-900 truncate">{{ category.name }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <el-tag size="mini" variant="outline" class="!border-gray-200 !text-gray-500">
@@ -128,17 +118,6 @@
                     <el-dropdown-item command="edit">
                       <i class="el-icon-edit text-gray-500 mr-2"></i>
                       编辑
-                    </el-dropdown-item>
-                    <el-dropdown-item :command="category.status === 'enabled' ? 'disable' : 'enable'">
-                      <i
-                        :class="[
-                          category.status === 'enabled' ? 'el-icon-circle-close text-orange-500' : 'el-icon-circle-check text-green-500',
-                          'mr-2'
-                        ]"
-                      ></i>
-                      <span :class="category.status === 'enabled' ? 'text-orange-600' : 'text-green-600'">
-                        {{ category.status === 'enabled' ? '禁用' : '启用' }}
-                      </span>
                     </el-dropdown-item>
                     <el-dropdown-item command="delete" class="!text-red-600">
                       <i class="el-icon-delete text-red-500 mr-2"></i>
@@ -167,9 +146,6 @@
                 </h3>
                 <p class="text-xs text-gray-400">
                   共 {{ filteredTags.length }} 个标签
-                  <span v-if="selectedCategory">
-                    · 来自 {{ selectedCategory.grandparentName }} · {{ selectedCategory.parentName }}
-                  </span>
                 </p>
               </div>
             </div>
@@ -296,7 +272,6 @@
       v-model="showCategoryModal"
       :is-edit="!!editingCategory"
       :edit-data="editingCategory"
-      :category-count="categories.length"
       @submit="handleCategorySubmit"
     />
 
@@ -329,34 +304,7 @@ import CategoryDialog from './resourceTagsDialog/CategoryDialog.vue';
 import CategoryDeleteDialog from './resourceTagsDialog/CategoryDeleteDialog.vue';
 import TagDialog from './resourceTagsDialog/TagDialog.vue';
 import TagDeleteDialog from './resourceTagsDialog/TagDeleteDialog.vue';
-
-// 模拟三级分类数据
-const mockCategories = [
-  { id: 'c1', name: '课件', level: 3, parentId: 's1', parentName: '小学数学', grandparentName: '数学', status: 'enabled', sort: 1, tagCount: 2 },
-  { id: 'c2', name: '教案', level: 3, parentId: 's1', parentName: '小学数学', grandparentName: '数学', status: 'enabled', sort: 2, tagCount: 1 },
-  { id: 'c3', name: '试题', level: 3, parentId: 's1', parentName: '小学数学', grandparentName: '数学', status: 'enabled', sort: 3, tagCount: 2 },
-  { id: 'c4', name: '试卷', level: 3, parentId: 's2', parentName: '初中数学', grandparentName: '数学', status: 'enabled', sort: 1, tagCount: 1 },
-  { id: 'c5', name: '学案', level: 3, parentId: 's2', parentName: '初中数学', grandparentName: '数学', status: 'enabled', sort: 2, tagCount: 1 },
-  { id: 'c6', name: '课件', level: 3, parentId: 's3', parentName: '高中数学', grandparentName: '数学', status: 'disabled', sort: 1, tagCount: 0 },
-  { id: 'c7', name: '教案', level: 3, parentId: 's4', parentName: '小学语文', grandparentName: '语文', status: 'enabled', sort: 1, tagCount: 1 },
-  { id: 'c8', name: '课件', level: 3, parentId: 's4', parentName: '小学语文', grandparentName: '语文', status: 'enabled', sort: 2, tagCount: 0 },
-  { id: 'c9', name: '试题', level: 3, parentId: 's5', parentName: '初中语文', grandparentName: '语文', status: 'enabled', sort: 1, tagCount: 1 },
-  { id: 'c10', name: '课件', level: 3, parentId: 's6', parentName: '小学英语', grandparentName: '英语', status: 'enabled', sort: 1, tagCount: 1 },
-];
-
-// 模拟标签数据
-const mockTags = [
-  { id: 't1', name: '重点难点', categoryId: 'c1', categoryName: '课件', description: '标记教学中的重点和难点内容', status: 'enabled', createdAt: '2026-05-10' },
-  { id: 't2', name: '实验演示', categoryId: 'c1', categoryName: '课件', description: '包含实验演示环节的资源', status: 'enabled', createdAt: '2026-05-09' },
-  { id: 't3', name: '高考真题', categoryId: 'c4', categoryName: '试卷', description: '历年高考真题及解析', status: 'enabled', createdAt: '2026-05-08' },
-  { id: 't4', name: '同步练习', categoryId: 'c3', categoryName: '试题', description: '与教材同步的练习题', status: 'disabled', createdAt: '2026-05-07' },
-  { id: 't5', name: '微课视频', categoryId: 'c2', categoryName: '教案', description: '时长在5-15分钟的短视频课程', status: 'enabled', createdAt: '2026-05-06' },
-  { id: 't6', name: '导学案', categoryId: 'c5', categoryName: '学案', description: '引导学生自主学习的学案', status: 'enabled', createdAt: '2026-05-05' },
-  { id: 't7', name: '古诗词鉴赏', categoryId: 'c7', categoryName: '教案', description: '古诗词鉴赏相关资源', status: 'enabled', createdAt: '2026-05-04' },
-  { id: 't8', name: '阅读理解', categoryId: 'c9', categoryName: '试题', description: '语文阅读理解训练题', status: 'enabled', createdAt: '2026-05-03' },
-  { id: 't9', name: '听力训练', categoryId: 'c10', categoryName: '课件', description: '英语听力训练资源', status: 'enabled', createdAt: '2026-05-02' },
-  { id: 't10', name: '单元测试', categoryId: 'c3', categoryName: '试题', description: '单元学习后的测试题', status: 'disabled', createdAt: '2026-05-01' },
-];
+import resourceTagApi from '@/api/resourceTag.js';
 
 export default {
   name: 'ResourceTags',
@@ -368,8 +316,8 @@ export default {
   },
   data() {
     return {
-      categories: mockCategories,
-      tags: mockTags,
+      categories: [],
+      tags: [],
       selectedCategoryId: null,
       categorySearch: '',
       searchKeyword: '',
@@ -387,15 +335,13 @@ export default {
   computed: {
     filteredCategories() {
       return this.categories.filter((cat) =>
-        cat.name.toLowerCase().includes(this.categorySearch.toLowerCase()) ||
-        cat.parentName?.toLowerCase().includes(this.categorySearch.toLowerCase()) ||
-        cat.grandparentName?.toLowerCase().includes(this.categorySearch.toLowerCase())
+        cat.name.toLowerCase().includes(this.categorySearch.toLowerCase())
       );
     },
     filteredTags() {
       return this.tags.filter((tag) => {
         const matchKeyword = tag.name.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
-                            tag.description.toLowerCase().includes(this.searchKeyword.toLowerCase());
+                            (tag.description || '').toLowerCase().includes(this.searchKeyword.toLowerCase());
         const matchStatus = this.filterStatus === 'all' || tag.status === this.filterStatus;
         const matchCategory = !this.selectedCategoryId || tag.categoryId === this.selectedCategoryId;
         return matchKeyword && matchStatus && matchCategory;
@@ -405,7 +351,44 @@ export default {
       return this.categories.find((c) => c.id === this.selectedCategoryId);
     },
   },
+  mounted() {
+    this.loadCategories();
+    this.loadTags();
+  },
   methods: {
+    convertStatus(status) {
+      return status === 1 ? 'enabled' : 'disabled';
+    },
+    toApiStatus(status) {
+      return status === 'enabled' ? 1 : 0;
+    },
+    async loadCategories() {
+      try {
+        const res = await resourceTagApi.categoryList();
+        if (res.code === 200) {
+          this.categories = (res.data || []).map((cat) => ({
+            ...cat,
+            status: this.convertStatus(cat.status),
+          }));
+        }
+      } catch (error) {
+        console.error('加载分类列表失败:', error);
+      }
+    },
+    async loadTags() {
+      try {
+        const res = await resourceTagApi.tagList();
+        if (res.code === 200) {
+          this.tags = (res.data || []).map((tag) => ({
+            ...tag,
+            status: this.convertStatus(tag.status),
+            createdAt: tag.createdAt ? tag.createdAt.split('T')[0] : '',
+          }));
+        }
+      } catch (error) {
+        console.error('加载标签列表失败:', error);
+      }
+    },
     getTagCount(categoryId) {
       return this.tags.filter((tag) => tag.categoryId === categoryId).length;
     },
@@ -413,10 +396,6 @@ export default {
       switch (command) {
         case 'edit':
           this.openEditCategory(category);
-          break;
-        case 'disable':
-        case 'enable':
-          this.toggleCategoryStatus(category.id);
           break;
         case 'delete':
           this.openDeleteCategory(category.id);
@@ -440,40 +419,48 @@ export default {
       this.deletingCategoryId = categoryId;
       this.showCategoryDeleteConfirm = true;
     },
-    handleCategorySubmit(form) {
-      if (this.editingCategory) {
-        this.categories = this.categories.map((c) =>
-          c.id === this.editingCategory.id
-            ? { ...c, name: form.name, sort: form.sort, status: form.status }
-            : c
-        );
-      } else {
-        const newCategory = {
-          id: `c${Date.now()}`,
-          name: form.name,
-          level: 3,
-          parentName: form.grade,
-          grandparentName: form.subject,
-          status: form.status,
-          sort: form.sort,
-          tagCount: 0,
-        };
-        this.categories.push(newCategory);
-      }
-    },
-    confirmDeleteCategory() {
-      if (this.deletingCategoryId) {
-        this.categories = this.categories.filter((c) => c.id !== this.deletingCategoryId);
-        if (this.selectedCategoryId === this.deletingCategoryId) {
-          this.selectedCategoryId = null;
+    async handleCategorySubmit(form) {
+      try {
+        if (this.editingCategory) {
+          const res = await resourceTagApi.updateCategory(this.editingCategory.id, {
+            name: form.name.trim(),
+          });
+          if (res.code === 200) {
+            this.$message.success('编辑分类成功');
+            this.loadCategories();
+          }
+        } else {
+          const res = await resourceTagApi.createCategory({
+            name: form.name.trim(),
+          });
+          if (res.code === 200) {
+            this.$message.success('新增分类成功');
+            this.loadCategories();
+          }
         }
-        this.deletingCategoryId = null;
+      } catch (error) {
+        console.error('操作分类失败:', error);
+        this.$message.error('操作分类失败');
       }
     },
-    toggleCategoryStatus(categoryId) {
-      this.categories = this.categories.map((c) =>
-        c.id === categoryId ? { ...c, status: c.status === 'enabled' ? 'disabled' : 'enabled' } : c
-      );
+    async confirmDeleteCategory() {
+      if (this.deletingCategoryId) {
+        try {
+          const res = await resourceTagApi.deleteCategory(this.deletingCategoryId);
+          if (res.code === 200) {
+            this.$message.success('删除分类成功');
+            if (this.selectedCategoryId === this.deletingCategoryId) {
+              this.selectedCategoryId = null;
+            }
+            this.deletingCategoryId = null;
+            this.loadCategories();
+            this.loadTags();
+          }
+        } catch (error) {
+          console.error('删除分类失败:', error);
+          this.$message.error('删除分类失败');
+        }
+      }
     },
     openAddTag() {
       this.editingTag = null;
@@ -487,39 +474,67 @@ export default {
       this.deletingTagId = tagId;
       this.showTagDeleteConfirm = true;
     },
-    handleTagSubmit(form) {
-      const category = this.categories.find((c) => c.id === form.categoryId);
-      if (!category) return;
-
-      if (this.editingTag) {
-        this.tags = this.tags.map((t) =>
-          t.id === this.editingTag.id
-            ? { ...t, name: form.name, categoryId: form.categoryId, categoryName: category.name, description: form.description }
-            : t
-        );
-      } else {
-        const newTag = {
-          id: `t${Date.now()}`,
-          name: form.name,
-          categoryId: form.categoryId,
-          categoryName: category.name,
-          description: form.description,
-          status: 'enabled',
-          createdAt: new Date().toISOString().split('T')[0],
-        };
-        this.tags.push(newTag);
+    async handleTagSubmit(form) {
+      try {
+        if (this.editingTag) {
+          const res = await resourceTagApi.updateTag(this.editingTag.id, {
+            id: this.editingTag.id,
+            name: form.name.trim(),
+            categoryId: form.categoryId,
+            description: form.description,
+            status: this.toApiStatus(form.status),
+          });
+          if (res.code === 200) {
+            this.$message.success('编辑标签成功');
+            this.loadTags();
+            this.loadCategories();
+          }
+        } else {
+          const res = await resourceTagApi.createTag({
+            name: form.name.trim(),
+            categoryId: form.categoryId,
+            description: form.description,
+            status: this.toApiStatus(form.status),
+          });
+          if (res.code === 200) {
+            this.$message.success('新增标签成功');
+            this.loadTags();
+            this.loadCategories();
+          }
+        }
+      } catch (error) {
+        console.error('操作标签失败:', error);
+        this.$message.error('操作标签失败');
       }
     },
-    confirmDeleteTag() {
+    async confirmDeleteTag() {
       if (this.deletingTagId) {
-        this.tags = this.tags.filter((t) => t.id !== this.deletingTagId);
-        this.deletingTagId = null;
+        try {
+          const res = await resourceTagApi.deleteTag(this.deletingTagId);
+          if (res.code === 200) {
+            this.$message.success('删除标签成功');
+            this.deletingTagId = null;
+            this.loadTags();
+            this.loadCategories();
+          }
+        } catch (error) {
+          console.error('删除标签失败:', error);
+          this.$message.error('删除标签失败');
+        }
       }
     },
-    toggleTagStatus(tagId) {
-      this.tags = this.tags.map((t) =>
-        t.id === tagId ? { ...t, status: t.status === 'enabled' ? 'disabled' : 'enabled' } : t
-      );
+    async toggleTagStatus(tagId) {
+      try {
+        const res = await resourceTagApi.toggleTagStatus(tagId);
+        if (res.code === 200) {
+          this.$message.success('状态切换成功');
+        }
+      } catch (error) {
+        console.error('切换标签状态失败:', error);
+        this.$message.error('切换标签状态失败');
+      } finally {
+        this.loadTags();
+      }
     },
   },
 };

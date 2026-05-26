@@ -8,7 +8,7 @@
   >
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-medium mb-2">
+        <label class="block text-sm font-medium mb-1.5">
           标签名称 <span class="text-red-500">*</span>
         </label>
         <el-input
@@ -17,27 +17,34 @@
         />
       </div>
       <div>
-        <label class="block text-sm font-medium mb-2">
+        <label class="block text-sm font-medium mb-1.5">
           所属分类 <span class="text-red-500">*</span>
         </label>
-        <el-select v-model="form.categoryId" placeholder="选择分类" class="w-full">
+        <el-select v-model="form.categoryId" placeholder="请选择分类" class="w-full">
           <el-option
             v-for="category in enabledCategories"
             :key="category.id"
-            :label="`${category.name} (${category.grandparentName} · ${category.parentName})`"
+            :label="category.name"
             :value="category.id"
           />
         </el-select>
       </div>
       <div>
-        <label class="block text-sm font-medium mb-2">描述</label>
+        <label class="block text-sm font-medium mb-1.5">描述</label>
         <el-input
           v-model="form.description"
           type="textarea"
-          :rows="4"
-          placeholder="请输入标签描述（可选）"
+          :rows="3"
+          placeholder="请输入标签描述"
           resize="none"
         />
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5">状态</label>
+        <el-select v-model="form.status" class="w-full">
+          <el-option label="启用" value="enabled" />
+          <el-option label="禁用" value="disabled" />
+        </el-select>
       </div>
     </div>
     <div slot="footer" class="flex justify-end gap-3">
@@ -70,7 +77,7 @@ export default {
       default: () => [],
     },
     defaultCategoryId: {
-      type: String,
+      type: [Number, String],
       default: '',
     },
   },
@@ -80,6 +87,7 @@ export default {
         name: '',
         categoryId: '',
         description: '',
+        status: 'enabled',
       },
     };
   },
@@ -110,12 +118,14 @@ export default {
           name: this.editData.name,
           categoryId: this.editData.categoryId,
           description: this.editData.description,
+          status: this.editData.status,
         };
       } else {
         this.form = {
           name: '',
           categoryId: this.defaultCategoryId,
           description: '',
+          status: 'enabled',
         };
       }
     },
@@ -123,7 +133,7 @@ export default {
       this.$emit('close');
     },
     handleSubmit() {
-      if (!this.form.name || !this.form.categoryId) {
+      if (!this.form.name.trim() || !this.form.categoryId) {
         this.$message.warning('请填写完整信息');
         return;
       }

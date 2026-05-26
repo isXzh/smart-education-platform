@@ -168,12 +168,22 @@
               { path: '/schedule-calendar', title: '排课日历' },
             ],
           },
+          // {
+          //   path: '/devices',
+          //   icon: 'el-icon-monitor',
+          //   title: '设备管理',
+          //   expanded: true,
+          //   children: [{ path: '/devices-list', title: '设备列表' }],
+          // },
           {
-            path: '/devices',
-            icon: 'el-icon-monitor',
-            title: '设备管理',
+            path: '/cloud-meeting',
+            icon: 'el-icon-chat-dot-round',
+            title: '云会议管理',
             expanded: true,
-            children: [{ path: '/devices-list', title: '设备列表' }],
+            children: [
+              { path: '/cloud-meeting-hardware', title: '硬件终端' },
+              { path: '/cloud-meeting-software', title: '软件终端' },
+            ],
           },
           {
             path: '/resource',
@@ -183,7 +193,7 @@
             children: [
               { path: '/resource-personal', title: '个人资源' },
               { path: '/resource-common', title: '公共资源' },
-              { path: '/resource-tags', title: '标签管理' },
+              { path: '/resource-types', title: '类型管理' },
             ],
           },
           {
@@ -192,13 +202,15 @@
             title: '基础信息管理',
             expanded: true,
             children: [
-              { path: '/Information-base-info', title: '组织架构' },
+              { path: '/Information-school-management', title: '学校管理' },
+              // { path: '/Information-base-info', title: '组织架构' },
               { path: '/Information-subject-management', title: '学科管理' },
               { path: '/Information-subject-grades', title: '年级管理' },
               { path: '/Information-subject-classes', title: '班级管理' },
               { path: '/Information-subject-personnel', title: '人员管理' },
               { path: '/Information-class-period', title: '课时管理' },
               { path: '/Information-subject-course', title: '课程管理' },
+              { path: '/resource-tags', title: '标签管理' },
             ],
           },
 
@@ -288,6 +300,9 @@
           '/schedule-view': '课表视图',
           '/schedule-calendar': '排课日历',
           '/devices': '设备管理',
+          '/cloud-meeting': '云会议管理',
+          '/cloud-meeting-hardware': '硬件终端',
+          '/cloud-meeting-software': '软件终端',
           '/organizational-structure': '组织架构',
           '/class-period': '课时管理',
           '/subject-management': '学科管理',
@@ -296,6 +311,7 @@
           '/role-permission': '角色权限',
           '/system-config': '系统配置',
           '/operation-log': '操作日志',
+          '/resource-types': '资源类型管理',
           '/profile': '个人中心',
         };
 

@@ -59,6 +59,20 @@ const http = {
     }
     return request(config);
   },
+  postFileJson(url, params) {
+    const config = {
+      method: 'post',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    if (params) {
+      config.data = params;
+    }
+    return request(config);
+  },
   postImport(url, params) {
     const config = {
       method: 'post',

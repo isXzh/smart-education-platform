@@ -16,35 +16,20 @@
 
       <!-- 所属学科和学段 - 并排 -->
       <div class="form-row">
-        <el-form-item label="所属学科" prop="subjectId" class="form-item-required form-item-half">
-          <el-select
-            v-model="formData.subjectId"
-            placeholder="请选择学科"
-            class="form-select"
-          >
-            <el-option v-for="item in subjectOptions" :key="item.value" :label="item.label" :value="item.value" />
+        <el-form-item label="所属学段" prop="stageId" class="form-item-required form-item-half">
+          <el-select v-model="formData.stageId" placeholder="请选择学段" class="form-select" @change="handleStageChange">
+            <el-option v-for="item in stageOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-
-        <el-form-item label="所属学段" prop="stageId" class="form-item-required form-item-half">
-          <el-select
-            v-model="formData.stageId"
-            placeholder="请选择学段"
-            class="form-select"
-          >
-            <el-option v-for="item in stageOptions" :key="item.value" :label="item.label" :value="item.value" />
+        <el-form-item label="所属学科" prop="subjectId" class="form-item-required form-item-half">
+          <el-select v-model="formData.subjectId" placeholder="请选择学科" class="form-select" :disabled="!formData.stageId" @change="handleSubjectChange">
+            <el-option v-for="item in subjectOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </div>
 
-      <!-- 课程代码 -->
       <el-form-item label="课程代码" prop="courseCode" class="form-item-required">
-        <el-input v-model="formData.courseCode" placeholder="请输入课程代码" class="form-input" />
-      </el-form-item>
-
-      <!-- 课时数 -->
-      <el-form-item label="课时数" prop="creditHours">
-        <el-input-number v-model="formData.creditHours" :min="0" :precision="0" placeholder="请输入课时数" class="form-input" />
+        <el-input v-model="formData.courseCode" placeholder="根据学科自动生成" class="form-input" disabled />
       </el-form-item>
 
       <!-- 状态 -->
@@ -57,24 +42,12 @@
 
       <!-- 课程简介 -->
       <el-form-item label="课程简介" class="form-item-optional">
-        <el-input
-          v-model="formData.courseDesc"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入课程简介"
-          resize="none"
-        />
+        <el-input v-model="formData.courseDesc" type="textarea" :rows="4" placeholder="请输入课程简介" resize="none" />
       </el-form-item>
 
       <!-- 备注 -->
       <el-form-item label="备注" class="form-item-optional">
-        <el-input
-          v-model="formData.remark"
-          type="textarea"
-          :rows="2"
-          placeholder="请输入备注"
-          resize="none"
-        />
+        <el-input v-model="formData.remark" type="textarea" :rows="2" placeholder="请输入备注" resize="none" />
       </el-form-item>
     </el-form>
 
@@ -87,142 +60,172 @@
 </template>
 
 <script>
-import subjectApi from '@/api/subject.js'
-import gradeLevelApi from '@/api/gradeLevel.js'
+  import subjectApi from '@/api/subject.js';
+  import courseApi from '@/api/course.js';
+  import gradeLevelApi from '@/api/gradeLevel.js';
 
-export default {
-  name: 'CourseDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false,
-    },
-    isEdit: {
-      type: Boolean,
-      default: false,
-    },
-    editData: {
-      type: Object,
-      default: null,
-    },
-  },
-  data() {
-    return {
-      dialogVisible: false,
-      formData: {
-        courseName: '',
-        courseCode: '',
-        subjectId: null,
-        stageId: null,
-        creditHours: 0,
-        status: 1,
-        courseDesc: '',
-        remark: ''
+  export default {
+    name: 'CourseDialog',
+    props: {
+      visible: {
+        type: Boolean,
+        default: false,
       },
-      formRules: {
-        courseName: [
-          { required: true, message: '请输入课程名称', trigger: 'blur' },
-          { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' },
-        ],
-        courseCode: [
-          { required: true, message: '请输入课程代码', trigger: 'blur' },
-        ],
-        subjectId: [{ required: true, message: '请选择所属学科', trigger: 'change' }],
-        stageId: [{ required: true, message: '请选择所属学段', trigger: 'change' }],
-        status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+      isEdit: {
+        type: Boolean,
+        default: false,
       },
-      subjectOptions: [],
-      stageOptions: [],
-    };
-  },
-  watch: {
-    visible(val) {
-      this.dialogVisible = val;
-      if (val) {
-        this.loadSubjectOptions();
-        this.loadStageOptions();
-        this.initFormData();
-      }
+      editData: {
+        type: Object,
+        default: null,
+      },
     },
-    dialogVisible(val) {
-      this.$emit('update:visible', val);
-    },
-  },
-  methods: {
-    // 加载学科下拉选项
-    async loadSubjectOptions() {
-      try {
-        const res = await subjectApi.list();
-        if (res.code === 200 && res.data) {
-          this.subjectOptions = res.data.map(item => ({
-            label: item.subjectName,
-            value: item.id
-          }));
-        }
-      } catch (error) {
-        console.error('加载学科列表失败:', error);
-      }
-    },
-    // 加载学段下拉选项
-    async loadStageOptions() {
-      try {
-        const res = await gradeLevelApi.list();
-        if (res.code === 200 && res.data) {
-          this.stageOptions = res.data.map(item => ({
-            label: item.stageName,
-            value: item.id
-          }));
-        }
-      } catch (error) {
-        console.error('加载学段列表失败:', error);
-      }
-    },
-    // 初始化表单数据
-    initFormData() {
-      if (this.isEdit && this.editData) {
-        this.formData = {
-          id: this.editData.id,
-          courseName: this.editData.courseName || '',
-          courseCode: this.editData.courseCode || '',
-          subjectId: this.editData.subjectId || null,
-          stageId: this.editData.stageId || null,
-          creditHours: this.editData.creditHours || 0,
-          status: this.editData.status !== undefined ? this.editData.status : 1,
-          courseDesc: this.editData.courseDesc || '',
-          remark: this.editData.remark || ''
-        };
-      } else {
-        this.formData = {
+    data() {
+      return {
+        dialogVisible: false,
+        formData: {
           courseName: '',
           courseCode: '',
           subjectId: null,
           stageId: null,
-          creditHours: 0,
           status: 1,
           courseDesc: '',
-          remark: ''
-        };
-      }
+          remark: '',
+        },
+        formRules: {
+          courseName: [
+            { required: true, message: '请输入课程名称', trigger: 'blur' },
+            { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' },
+          ],
+          courseCode: [{ required: true, message: '请输入课程代码', trigger: 'blur' }],
+          subjectId: [{ required: true, message: '请选择所属学科', trigger: 'change' }],
+          stageId: [{ required: true, message: '请选择所属学段', trigger: 'change' }],
+          status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+        },
+        subjectOptions: [],
+        stageOptions: [],
+      };
     },
-    // 取消
-    handleCancel() {
-      this.dialogVisible = false;
-    },
-    // 提交
-    handleSubmit() {
-      this.$refs.courseForm.validate(valid => {
-        if (valid) {
-          this.$emit('submit', { ...this.formData });
+    watch: {
+      visible(val) {
+        this.dialogVisible = val;
+        if (val) {
+          this.loadStageOptions();
+          this.initFormData();
         }
-      });
+      },
+      dialogVisible(val) {
+        this.$emit('update:visible', val);
+      },
     },
-    // 弹窗关闭
-    handleClosed() {
-      this.$refs.courseForm.resetFields();
-      this.$emit('update:visible', false);
+    methods: {
+      // 加载学科下拉选项
+      async loadSubjectOptions(stageId) {
+        try {
+          let res;
+          if (stageId) {
+            res = await subjectApi.listByStage(stageId);
+          } else {
+            res = await subjectApi.list();
+          }
+          if (res.code === 200 && res.data) {
+            this.subjectOptions = res.data.map(item => ({
+              label: item.subjectName,
+              value: item.id,
+            }));
+          }
+        } catch (error) {
+          console.error('加载学科列表失败:', error);
+        }
+      },
+      // 加载学段下拉选项
+      async loadStageOptions() {
+        try {
+          const res = await gradeLevelApi.list();
+          if (res.code === 200 && res.data) {
+            this.stageOptions = res.data.map(item => ({
+              label: item.stageName,
+              value: item.id,
+            }));
+          }
+        } catch (error) {
+          console.error('加载学段列表失败:', error);
+        }
+      },
+      // 初始化表单数据
+      initFormData() {
+        if (this.isEdit && this.editData) {
+          this.formData = {
+            id: this.editData.id,
+            courseName: this.editData.courseName || '',
+            courseCode: this.editData.courseCode || '',
+            subjectId: this.editData.subjectId || null,
+            stageId: this.editData.stageId || null,
+            status: this.editData.status !== undefined ? this.editData.status : 1,
+            courseDesc: this.editData.courseDesc || '',
+            remark: this.editData.remark || '',
+          };
+          if (this.editData.stageId) {
+            this.loadSubjectOptions(this.editData.stageId);
+          } else {
+            this.loadSubjectOptions();
+          }
+        } else {
+          this.formData = {
+            courseName: '',
+            courseCode: '',
+            subjectId: null,
+            stageId: null,
+            status: 1,
+            courseDesc: '',
+            remark: '',
+          };
+          this.loadSubjectOptions();
+        }
+      },
+      // 取消
+      handleCancel() {
+        this.dialogVisible = false;
+      },
+      handleStageChange(stageId) {
+        this.formData.subjectId = null;
+        this.formData.courseCode = '';
+        this.subjectOptions = [];
+        if (stageId) {
+          this.loadSubjectOptions(stageId);
+        }
+      },
+      async handleSubjectChange(subjectId) {
+        if (!subjectId) {
+          this.formData.courseCode = '';
+          return;
+        }
+        const selected = this.subjectOptions.find(item => item.value === subjectId);
+        if (!selected) return;
+        try {
+          const res = await courseApi.generateCode({ subjectName: selected.label });
+          if (res.code === 200 && res.data) {
+            this.formData.courseCode = res.data;
+          }
+        } catch (error) {
+          console.error('生成课程代码失败:', error);
+        }
+      },
+      // 提交
+      handleSubmit() {
+        this.$refs.courseForm.validate(valid => {
+          if (valid) {
+            this.$emit('submit', { ...this.formData });
+          }
+        });
+      },
+      // 弹窗关闭
+      handleClosed() {
+        this.$refs.courseForm.resetFields();
+        this.$emit('update:visible', false);
+      },
     },
-  },
-};
+  };
 </script>
 
 <style lang="scss" scoped>

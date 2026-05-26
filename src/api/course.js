@@ -1,4 +1,4 @@
-import http from "@/utils/http.js";
+import http from '@/utils/http.js';
 // 课程管理
 export default {
   // 修改课程
@@ -11,11 +11,11 @@ export default {
   },
   // 新增课程
   async add(data) {
-    return await http.post("/api/base/course", data);
+    return await http.post('/api/base/course', data);
   },
   // 导入课程
   async importCourses(data) {
-    return await http.post("/api/base/course/import", data);
+    return await http.post('/api/base/course/import', data);
   },
   // 修改课程状态
   async updateStatus(id, status) {
@@ -25,11 +25,11 @@ export default {
   },
   // 分页查询课程 - 使用POST方法
   async page(params) {
-    return await http.post("/api/base/course/page", params);
+    return await http.post('/api/base/course/page', params);
   },
   // 获取课程列表
   async list() {
-    return await http.get("/api/base/course/list");
+    return await http.get('/api/base/course/list');
   },
   // 根据学科获取课程列表
   async listBySubject(subjectId) {
@@ -41,6 +41,10 @@ export default {
   },
   // 导出课程
   async exportCourses(params) {
-    return await http.get("/api/base/course/export", params);
+    return await http.get('/api/base/course/export', params);
+  },
+  // 生成课程代码
+  async generateCode(params) {
+    return await http.get('/api/base/course/generateCode', params);
   },
 };

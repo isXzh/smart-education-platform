@@ -52,10 +52,10 @@ service.interceptors.request.use(
     if (!config.url.includes("http")) {
       switch (config.urlType) {
         case "businessURL":
-          // if (!window.businessURL) {
-          //   console.warn("window.businessURL 未初始化，使用默认值");
-          //   window.businessURL = "http://120.55.72.186:8081";
-          // }
+          if (!window.businessURL) {
+            console.error("window.businessURL 未初始化，请求将被拒绝:", config.url);
+            return Promise.reject(new Error("window.businessURL 未初始化"));
+          }
           config.url = window.businessURL + config.url;
           break;
       }

@@ -29,4 +29,8 @@ export default {
   gradeList(params) {
     return http.get('/api/base/grade/list', params);
   },
+  // 根据学校类型查询年级列表
+  listBySchoolType(params) {
+    return http.get('/api/base/grade/listBySchoolType', params);
+  },
 };

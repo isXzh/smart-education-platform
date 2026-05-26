@@ -40,20 +40,15 @@
             clearable
             @input="handleSearch"
           />
-          <el-select
+          <!-- <el-select
             v-model="selectedStage"
             placeholder="全部学段"
             class="stage-select"
             clearable
             @change="handleStageChange"
           >
-            <el-option
-              v-for="stage in stageList"
-              :key="stage.id"
-              :label="stage.stageName"
-              :value="stage.id"
-            />
-          </el-select>
+            <el-option v-for="stage in stageList" :key="stage.id" :label="stage.stageName" :value="stage.id" />
+          </el-select> -->
           <el-select
             v-model="selectedGrade"
             placeholder="全部年级"
@@ -61,12 +56,7 @@
             clearable
             @change="handleGradeChange"
           >
-            <el-option
-              v-for="grade in gradeList"
-              :key="grade.id"
-              :label="grade.gradeName"
-              :value="grade.id"
-            />
+            <el-option v-for="grade in gradeList" :key="grade.id" :label="grade.gradeName" :value="grade.id" />
           </el-select>
         </div>
       </div>
@@ -88,13 +78,13 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="所属学段" min-width="100">
+          <!-- <el-table-column label="所属学段" min-width="100">
             <template #default="{ row }">
               <el-tag size="small" :type="getStageTagType(row.stageName)" effect="plain">
                 {{ row.stageName }}
               </el-tag>
             </template>
-          </el-table-column>
+          </el-table-column> -->
 
           <el-table-column label="所属年级" min-width="100">
             <template #default="{ row }">
@@ -108,11 +98,11 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="教室" min-width="120">
+          <!-- <el-table-column label="教室" min-width="120">
             <template #default="{ row }">
               <span>{{ row.classroomName || '-' }}</span>
             </template>
-          </el-table-column>
+          </el-table-column> -->
 
           <el-table-column prop="sortOrder" label="排序" min-width="80" align="center" />
 
@@ -171,9 +161,6 @@
       :visible.sync="dialogVisible"
       :title="dialogTitle"
       :edit-data="editData"
-      :stage-list="stageList"
-      :grade-list="gradeList"
-      :teacher-list="teacherList"
       @confirm="handleDialogConfirm"
     />
 
@@ -186,7 +173,6 @@
   import ClassDialog from './dialog/ClassDialog.vue';
   import ClassImportDialog from './dialog/ClassImportDialog.vue';
   import classApi from '@/api/class';
-  import gradeLevelApi from '@/api/gradeLevel';
   import gradeApi from '@/api/grade';
 
   export default {
@@ -207,7 +193,6 @@
         classList: [],
         stageList: [],
         gradeList: [],
-        teacherList: [],
         selectedRows: [],
         currentPage: 1,
         pageSize: 10,
@@ -216,21 +201,20 @@
       };
     },
     created() {
-      this.loadStageList();
+      // this.loadStageList();
       this.loadGradeList();
-      this.loadTeacherList();
       this.loadClassList();
     },
     methods: {
-      async loadStageList() {
-        try {
-          const res = await gradeLevelApi.list();
-          this.stageList = res.data || [];
-        } catch (error) {
-          console.error('加载学段列表失败:', error);
-          this.$message.error('加载学段列表失败');
-        }
-      },
+      // async loadStageList() {
+      //   try {
+      //     const res = await gradeApi.stageList();
+      //     this.stageList = res.data || [];
+      //   } catch (error) {
+      //     console.error('加载学段列表失败:', error);
+      //     this.$message.error('加载学段列表失败');
+      //   }
+      // },
       async loadGradeList() {
         try {
           const res = await gradeApi.list();
@@ -238,15 +222,6 @@
         } catch (error) {
           console.error('加载年级列表失败:', error);
           this.$message.error('加载年级列表失败');
-        }
-      },
-      async loadTeacherList() {
-        try {
-          const res = await classApi.teacherList();
-          this.teacherList = res.data || [];
-        } catch (error) {
-          console.error('加载教师列表失败:', error);
-          this.$message.error('加载教师列表失败');
         }
       },
       async loadClassList() {
@@ -364,11 +339,11 @@
         try {
           const ids = this.selectedRows.map(row => row.id);
           const response = await classApi.export(ids);
-          
+
           const blob = new Blob([response], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           });
-          
+
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -377,7 +352,7 @@
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
-          
+
           this.$message.success('导出成功');
         } catch (error) {
           this.$message.error('导出失败');

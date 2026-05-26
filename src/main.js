@@ -53,20 +53,10 @@ Vue.use(ElementUI);
 // ✅ 关键修改：等待配置加载完成后再启动应用
 async function bootstrap() {
   try {
-    // 加载配置文件
-    // 异步加载配置文件，覆盖默认值
-    loadConfig()
-      .then(config => {
-        window.businessURL = config.api.businessURL;
-        console.log('配置加载完成，businessURL:', window.businessURL);
-      })
-      .catch(error => {
-        console.error('配置加载失败，使用默认值:', error);
-        // 降级处理：保持默认值不变
-      });
-    console.log('配置加载完成:', window.businessURL);
+    const config = await loadConfig();
+    window.businessURL = config.api.businessURL;
+    console.log('配置加载完成，businessURL:', window.businessURL);
 
-    // 配置加载完成后启动应用
     new Vue({
       router,
       store,
@@ -74,8 +64,6 @@ async function bootstrap() {
     }).$mount('#app');
   } catch (error) {
     console.error('配置加载失败，使用默认配置:', error);
-    // 降级：使用默认配置
-    // window.businessURL = 'http://120.55.72.186:8081';
 
     new Vue({
       router,

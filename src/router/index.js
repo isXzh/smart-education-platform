@@ -13,15 +13,19 @@ import Course from '@/components/views/InformationManagement/course.vue';
 import Personnel from '@/components/views/InformationManagement/personnel.vue';
 import Grades from '@/components/views/InformationManagement/grades.vue';
 import Classes from '@/components/views/InformationManagement/classes.vue';
+import SchoolManagement from '@/components/views/InformationManagement/schoolManagement.vue';
 import SystemManagement from '@/components/views/systemManagement/index.vue';
 import AccountManagement from '@/components/views/systemManagement/AccountManagement.vue';
 import RolePermission from '@/components/views/systemManagement/RolePermission.vue';
 import SystemConfig from '@/components/views/systemManagement/SystemConfig.vue';
 import OperationLog from '@/components/views/systemManagement/OperationLog.vue';
 import resourceTags from '@/components/views/resource/resourceTags.vue';
+import resourceTypes from '@/components/views/resource/resourceTypes.vue';
 import resourcePersonal from '@/components/views/resource/resourcePersonal.vue';
 import resourceCommon from '@/components/views/resource/resourceCommon.vue';
 import DataBoard from '@/components/views/dataBoard/index.vue';
+import HardwareTerminal from '@/components/views/cloudMeeting/hardwareTerminal.vue';
+import SoftwareTerminal from '@/components/views/cloudMeeting/softwareTerminal.vue';
 import Login from '@/components/views/Login.vue';
 import Profile from '@/components/views/Profile.vue';
 
@@ -66,6 +70,18 @@ const routes = [
         name: 'devices-list',
         component: DeviceManagement,
       },
+      // 云会议管理-硬件终端
+      {
+        path: 'cloud-meeting-hardware',
+        name: 'cloud-meeting-hardware',
+        component: HardwareTerminal,
+      },
+      // 云会议管理-软件终端
+      {
+        path: 'cloud-meeting-software',
+        name: 'cloud-meeting-software',
+        component: SoftwareTerminal,
+      },
       // 资源库管理-个人资源
       {
         path: 'resource-personal',
@@ -83,6 +99,12 @@ const routes = [
         path: 'resource-tags',
         name: 'resource-tags',
         component: resourceTags,
+      },
+      // 资源库管理-类型管理
+      {
+        path: 'resource-types',
+        name: 'resource-types',
+        component: resourceTypes,
       },
       // 基础信息管理-组织架构
       {
@@ -125,6 +147,12 @@ const routes = [
         path: 'Information-subject-course',
         name: 'Information-subject-course',
         component: Course,
+      },
+      // 基础信息管理-学校管理
+      {
+        path: 'Information-school-management',
+        name: 'Information-school-management',
+        component: SchoolManagement,
       },
       // 系统管理
       {

@@ -2,7 +2,7 @@ import http from '@/utils/http.js';
 
 export default {
   list(params) {
-    return http.get('/api/base/class/grade/list', params);
+    return http.get('/api/base/grade/list', params);
   },
   add(data) {
     return http.post('/api/base/grade', data);
@@ -19,4 +19,4 @@ export default {
   downloadTemplate() {
     return http.getFile('/api/base/grade/template');
   },
-}
+};
