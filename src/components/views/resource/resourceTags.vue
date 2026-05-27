@@ -115,13 +115,13 @@
                     <i class="el-icon-more text-gray-400"></i>
                   </button>
                   <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item command="edit">
+                    <el-dropdown-item command="edit" :disabled="category.referenceCount > 0">
                       <i class="el-icon-edit text-gray-500 mr-2"></i>
                       编辑
                     </el-dropdown-item>
-                    <el-dropdown-item command="delete" class="!text-red-600">
+                    <el-dropdown-item command="delete" class="!text-red-600" :disabled="category.referenceCount > 0">
                       <i class="el-icon-delete text-red-500 mr-2"></i>
-                      <span class="text-red-600">删除</span>
+                      <span :class="{ 'text-red-600': category.referenceCount <= 0, 'text-gray-400': category.referenceCount > 0 }">删除</span>
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
@@ -236,7 +236,8 @@
                   v-model="tag.status"
                   active-value="enabled"
                   inactive-value="disabled"
-                  @change="() => toggleTagStatus(tag.id)"
+                  :disabled="tag.referenceCount > 0"
+                  @change="() => toggleTagStatus(tag)"
                 />
               </div>
 
@@ -248,14 +249,18 @@
                 <span class="text-xs text-gray-400">创建于 {{ tag.createdAt }}</span>
                 <div class="flex items-center gap-1">
                   <button
-                    class="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors"
+                    class="p-2 rounded-lg transition-colors"
+                    :class="tag.referenceCount > 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-blue-50 text-gray-400 hover:text-blue-600'"
+                    :disabled="tag.referenceCount > 0"
                     @click="openEditTag(tag)"
                   >
                     <i class="el-icon-edit"></i>
                   </button>
                   <button
-                    class="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
-                    @click="openDeleteTag(tag.id)"
+                    class="p-2 rounded-lg transition-colors"
+                    :class="tag.referenceCount > 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-red-50 text-gray-400 hover:text-red-600'"
+                    :disabled="tag.referenceCount > 0"
+                    @click="openDeleteTag(tag)"
                   >
                     <i class="el-icon-delete"></i>
                   </button>
@@ -398,7 +403,7 @@ export default {
           this.openEditCategory(category);
           break;
         case 'delete':
-          this.openDeleteCategory(category.id);
+          this.openDeleteCategory(category);
           break;
       }
     },
@@ -407,16 +412,19 @@ export default {
       this.showCategoryModal = true;
     },
     openEditCategory(category) {
+      if (category.referenceCount > 0) {
+        this.$message.warning('该分类已被引用，无法编辑');
+        return;
+      }
       this.editingCategory = category;
       this.showCategoryModal = true;
     },
-    openDeleteCategory(categoryId) {
-      const tagCount = this.getTagCount(categoryId);
-      if (tagCount > 0) {
-        this.$message.warning(`该分类下有${tagCount}个标签，请先删除或转移标签`);
+    openDeleteCategory(category) {
+      if (category.referenceCount > 0) {
+        this.$message.warning('该分类已被引用，无法删除');
         return;
       }
-      this.deletingCategoryId = categoryId;
+      this.deletingCategoryId = category.id;
       this.showCategoryDeleteConfirm = true;
     },
     async handleCategorySubmit(form) {
@@ -467,11 +475,19 @@ export default {
       this.showTagModal = true;
     },
     openEditTag(tag) {
+      if (tag.referenceCount > 0) {
+        this.$message.warning('该标签已被引用，无法编辑');
+        return;
+      }
       this.editingTag = tag;
       this.showTagModal = true;
     },
-    openDeleteTag(tagId) {
-      this.deletingTagId = tagId;
+    openDeleteTag(tag) {
+      if (tag.referenceCount > 0) {
+        this.$message.warning('该标签已被引用，无法删除');
+        return;
+      }
+      this.deletingTagId = tag.id;
       this.showTagDeleteConfirm = true;
     },
     async handleTagSubmit(form) {
@@ -523,9 +539,14 @@ export default {
         }
       }
     },
-    async toggleTagStatus(tagId) {
+    async toggleTagStatus(tag) {
+      if (tag.referenceCount > 0) {
+        this.$message.warning('该标签已被引用，无法切换状态');
+        this.loadTags();
+        return;
+      }
       try {
-        const res = await resourceTagApi.toggleTagStatus(tagId);
+        const res = await resourceTagApi.toggleTagStatus(tag.id);
         if (res.code === 200) {
           this.$message.success('状态切换成功');
         }

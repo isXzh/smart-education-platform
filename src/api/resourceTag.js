@@ -3,23 +3,23 @@ import http from '@/utils/http.js';
 export default {
   // 新增标签
   createTag(data) {
-    return http.post('/api/base/resource/tag/tag', data);
+    return http.post('/api/base/resource/tag', data);
   },
   // 编辑标签
   updateTag(id, data) {
-    return http.put2(`/api/base/resource/tag/tag/${id}`, data);
+    return http.put2(`/api/base/resource/tag/${id}`, data);
   },
   // 删除标签
   deleteTag(id) {
-    return http.delete(`/api/base/resource/tag/tag/${id}`);
+    return http.delete(`/api/base/resource/tag/${id}`);
   },
   // 切换标签状态（启用/禁用）
   toggleTagStatus(id) {
-    return http.put2(`/api/base/resource/tag/tag/${id}/status`);
+    return http.put2(`/api/base/resource/tag/${id}/status`);
   },
   // 标签分页列表
   tagPage(params) {
-    return http.get('/api/base/resource/tag/tag/page', params);
+    return http.get('/api/base/resource/tag/page', params);
   },
   // 获取标签列表（按分类）
   tagList(categoryId) {
