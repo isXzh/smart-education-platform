@@ -288,7 +288,7 @@
         })
           .then(async () => {
             try {
-              await device.deleteMembers([row.id]);
+              await device.deleteMembers([row.userAccount]);
               this.$message.success('删除成功');
               this.loadTerminalList();
             } catch (error) {

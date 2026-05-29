@@ -1,7 +1,7 @@
 // utils/request.js
-import axios from "axios";
-import { Message, Loading } from "element-ui";
-import router from "@/router";
+import axios from 'axios';
+import { Message, Loading } from 'element-ui';
+import router from '@/router';
 
 // 创建axios实例
 const service = axios.create({
@@ -23,7 +23,7 @@ let failedQueue = [];
  * @param {string|null} token - 新的token
  */
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
+  failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
     } else {
@@ -35,26 +35,26 @@ const processQueue = (error, token = null) => {
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config) => {
+  config => {
     // 添加token
-    const token = sessionStorage.getItem("accessToken");
+    const token = sessionStorage.getItem('accessToken');
 
     // 判断是否是登录接口
-    const urlParts = config.url.split("/");
+    const urlParts = config.url.split('/');
     const lastPart = urlParts[urlParts.length - 1];
-    const isLoginRequest = lastPart === "accountLogin" || lastPart === "login";
+    const isLoginRequest = lastPart === 'accountLogin' || lastPart === 'login';
 
     if (token && !isLoginRequest) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     // config.headers["Content-Type"] = "application/json";
     // 处理业务URL前缀
-    if (!config.url.includes("http")) {
+    if (!config.url.includes('http')) {
       switch (config.urlType) {
-        case "businessURL":
+        case 'businessURL':
           if (!window.businessURL) {
-            console.error("window.businessURL 未初始化，请求将被拒绝:", config.url);
-            return Promise.reject(new Error("window.businessURL 未初始化"));
+            console.error('window.businessURL 未初始化，请求将被拒绝:', config.url);
+            return Promise.reject(new Error('window.businessURL 未初始化'));
           }
           config.url = window.businessURL + config.url;
           break;
@@ -65,22 +65,22 @@ service.interceptors.request.use(
     if (config.loading) {
       config.loadingInstance = Loading.service({
         fullscreen: true,
-        text: "加载中...",
-        background: "rgba(0, 0, 0, 0.7)",
+        text: '加载中...',
+        background: 'rgba(0, 0, 0, 0.7)',
       });
     }
 
     return config;
   },
-  (error) => {
-    console.error("请求错误:", error);
+  error => {
+    console.error('请求错误:', error);
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器（核心：实现无感刷新）
 service.interceptors.response.use(
-  (response) => {
+  response => {
     const res = response.data;
     const config = response.config;
 
@@ -91,7 +91,7 @@ service.interceptors.response.use(
 
     return res;
   },
-  async (error) => {
+  async error => {
     const originalRequest = error.config;
 
     // 关闭loading
@@ -101,7 +101,7 @@ service.interceptors.response.use(
 
     // 如果没有response对象，说明是网络错误
     if (!error.response) {
-      Message.error("网络连接异常，请检查网络");
+      Message.error('网络连接异常，请检查网络');
       return Promise.reject(error);
     }
 
@@ -112,10 +112,10 @@ service.interceptors.response.use(
     if (status === 401) {
       // 避免无限重试（已经重试过的请求直接失败）
       if (originalRequest._retry) {
-        Message.error("登录已过期，请重新登录");
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-        router.push("/login");
+        Message.error('登录已过期，请重新登录');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        router.push('/login');
         return Promise.reject(error);
       }
 
@@ -127,11 +127,11 @@ service.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+          .then(token => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
             return service(originalRequest);
           })
-          .catch((err) => {
+          .catch(err => {
             return Promise.reject(err);
           });
       }
@@ -140,9 +140,9 @@ service.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshTokenValue = sessionStorage.getItem("refreshToken");
+        const refreshTokenValue = sessionStorage.getItem('refreshToken');
         if (!refreshTokenValue) {
-          throw new Error("No refresh token");
+          throw new Error('No refresh token');
         }
 
         // 注意：这里必须用原生 axios，不能用 service，避免进入拦截器死循环
@@ -151,47 +151,44 @@ service.interceptors.response.use(
           { refreshToken: refreshTokenValue },
           {
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
           }
         );
 
-        console.log("刷新token响应=====", refreshResponse);
+        console.log('刷新token响应=====', refreshResponse);
 
         // 检查刷新是否成功
         if (refreshResponse.data && refreshResponse.data.code === 200) {
-          const { accessToken, refreshToken: newRefreshToken } =
-            refreshResponse.data.data;
+          const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data.data;
 
           // 保存新的token
-          sessionStorage.setItem("accessToken", accessToken);
-          sessionStorage.setItem("refreshToken", newRefreshToken);
+          sessionStorage.setItem('accessToken', accessToken);
+          sessionStorage.setItem('refreshToken', newRefreshToken);
 
           // 处理队列中的所有请求
           processQueue(null, accessToken);
 
           // 重试原始请求
-          originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
-          console.log("Token刷新成功，重试原始请求");
+          originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+          console.log('Token刷新成功，重试原始请求');
 
           return service(originalRequest);
         } else {
-          throw new Error(
-            refreshResponse.data?.message || "Refresh token failed"
-          );
+          throw new Error(refreshResponse.data?.message || 'Refresh token failed');
         }
       } catch (refreshError) {
-        console.log("Token刷新失败", refreshError);
+        console.log('Token刷新失败', refreshError);
 
         // 刷新失败，处理队列中的所有请求
         processQueue(refreshError, null);
 
         // 清除认证信息
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
 
-        Message.error("登录已过期，请重新登录");
-        router.push("/login");
+        Message.error('登录已过期，请重新登录');
+        router.push('/login');
 
         return Promise.reject(refreshError);
       } finally {
@@ -203,37 +200,37 @@ service.interceptors.response.use(
     if (response) {
       switch (status) {
         case 400:
-          Message.error("请求错误");
+          Message.error('请求错误');
           break;
         case 403:
-          Message.error("拒绝访问");
+          Message.error('拒绝访问');
           break;
         case 404:
-          Message.error("请求地址出错");
+          Message.error('请求地址出错');
           break;
         case 408:
-          Message.error("请求超时");
+          Message.error('请求超时');
           break;
         case 500:
-          Message.error("服务器内部错误");
+          Message.error('服务器内部错误');
           break;
         case 501:
-          Message.error("服务未实现");
+          Message.error('服务未实现');
           break;
         case 502:
-          Message.error("网关错误");
+          Message.error('网关错误');
           break;
         case 503:
-          Message.error("服务不可用");
+          Message.error('服务不可用');
           break;
         case 504:
-          Message.error("网关超时");
+          Message.error('网关超时');
           break;
         default:
           Message.error(`连接错误${status}`);
       }
     } else {
-      Message.error("网络连接异常，请检查网络");
+      Message.error('网络连接异常，请检查网络');
     }
 
     return Promise.reject(error);

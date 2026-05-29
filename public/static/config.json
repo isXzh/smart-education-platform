@@ -2,6 +2,7 @@
   "api": {
     "businessURL2": "http://120.55.72.186:8081",
     "businessURL": "http://192.168.15.196:8081",
-    "businessURL1": "http://172.20.10.3:8081"
+    "businessURL1": "http://172.20.10.3:8081",
+    "businessURL3": "http://192.168.86.248:8081"
   }
 }
