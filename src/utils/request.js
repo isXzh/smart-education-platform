@@ -5,7 +5,7 @@ import router from '@/router';
 
 // 创建axios实例
 const service = axios.create({
-  timeout: 15000,
+  timeout: 90000,
   withCredentials: true,
   // headers: {
   //   "Content-Type": "application/json;charset=UTF-8",

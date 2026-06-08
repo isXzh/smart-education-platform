@@ -133,7 +133,12 @@
             <span class="text-xs font-medium text-blue-600">{{ uploadProgressText || '准备上传...' }}</span>
             <span class="text-xs font-medium text-blue-600">{{ uploadProgress }}%</span>
           </div>
-          <el-progress :percentage="uploadProgress" :status="uploadStatus || undefined" :stroke-width="8" :show-text="false" />
+          <el-progress
+            :percentage="uploadProgress"
+            :status="uploadStatus || undefined"
+            :stroke-width="8"
+            :show-text="false"
+          />
         </div>
         <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
           <i class="el-icon-info"></i>单个文件不超过500MB可直接上传，超过500MB将自动分片上传
@@ -157,405 +162,406 @@
 </template>
 
 <script>
-import SparkMD5 from 'spark-md5';
-import publicResourceApi from '@/api/publicResource.js';
-import teacherApi from '@/api/teacher.js';
-import resourceTagApi from '@/api/resourceTag.js';
+  import SparkMD5 from 'spark-md5';
+  import publicResourceApi from '@/api/publicResource.js';
+  import teacherApi from '@/api/teacher.js';
+  import resourceTagApi from '@/api/resourceTag.js';
 
-const CHUNK_SIZE = 5 * 1024 * 1024;
-const SIZE_LIMIT = 500 * 1024 * 1024;
+  const CHUNK_SIZE = 5 * 1024 * 1024;
+  const SIZE_LIMIT = 500 * 1024 * 1024;
 
-export default {
-  name: 'ResourceFormDialog',
-  props: {
-    value: {
-      type: Boolean,
-      default: false,
-    },
-    isEdit: {
-      type: Boolean,
-      default: false,
-    },
-    editData: {
-      type: Object,
-      default: null,
-    },
-  },
-  data() {
-    return {
-      form: {
-        teacherId: '',
-        title: '',
-        categoryId: '',
-        tagIds: [],
-        description: '',
-        stageId: '',
-        gradeId: '',
-        subjectId: '',
+  export default {
+    name: 'ResourceFormDialog',
+    props: {
+      value: {
+        type: Boolean,
+        default: false,
       },
-      detailData: null,
-      teacherOptions: [],
-      categoryOptions: [],
-      tagList: [],
-      uploadFile: null,
-      fileMd5: '',
-      uploadProgress: 0,
-      uploadStatus: '',
-      uploadProgressText: '',
-      uploading: false,
-      submitting: false,
-    };
-  },
-  computed: {
-    visible: {
-      get() {
-        return this.value;
+      isEdit: {
+        type: Boolean,
+        default: false,
       },
-      set(val) {
-        this.$emit('input', val);
+      editData: {
+        type: Object,
+        default: null,
       },
     },
-    canSubmit() {
-      if (!this.form.teacherId || !this.form.title.trim()) return false;
-      if (this.isEdit) return true;
-      return !this.uploading && this.fileMd5 !== '';
-    },
-  },
-  watch: {
-    value(val) {
-      if (val) {
-        this.loadTeacherOptions();
-        this.loadCategoryOptions();
-        if (this.isEdit && this.editData) {
-          this.loadDetail(this.editData.id);
-        } else {
-          this.initForm();
-        }
-      }
-    },
-  },
-  methods: {
-    async loadDetail(id) {
-      try {
-        const res = await publicResourceApi.getById(id);
-        this.detailData = res.data || {};
-        this.initFormWithDetail(this.detailData);
-      } catch (e) {
-        console.error(e);
-        this.initForm();
-      }
-    },
-    initForm() {
-      this.form = {
-        teacherId: '',
-        title: '',
-        categoryId: '',
-        tagIds: [],
-        description: '',
-        stageId: '',
-        gradeId: '',
-        subjectId: '',
+    data() {
+      return {
+        form: {
+          teacherId: '',
+          title: '',
+          categoryId: '',
+          tagIds: [],
+          description: '',
+          stageId: '',
+          gradeId: '',
+          subjectId: '',
+        },
+        detailData: null,
+        teacherOptions: [],
+        categoryOptions: [],
+        tagList: [],
+        uploadFile: null,
+        fileMd5: '',
+        uploadProgress: 0,
+        uploadStatus: '',
+        uploadProgressText: '',
+        uploading: false,
+        submitting: false,
       };
-      this.tagList = [];
-      this.uploadFile = null;
-      this.fileMd5 = '';
-      this.uploadProgress = 0;
-      this.uploadStatus = '';
-      this.uploadProgressText = '';
-      this.uploading = false;
-      this.submitting = false;
-      this.detailData = null;
     },
-    initFormWithDetail(detail) {
-      this.form = {
-        teacherId: detail.teacherId || '',
-        title: detail.title || '',
-        categoryId: '',
-        tagIds: detail.tagIds || [],
-        description: detail.description || '',
-        stageId: detail.stageId || '',
-        gradeId: detail.gradeId || '',
-        subjectId: detail.subjectId || '',
-      };
-      this.uploadFile = null;
-      this.fileMd5 = '';
-      this.uploadProgress = 0;
-      this.uploadStatus = '';
-      this.uploadProgressText = '';
-      this.uploading = false;
-      this.submitting = false;
-
-      if (detail.tagIds && detail.tagIds.length > 0) {
-        this.loadTagListForEdit(detail.tagIds);
-      }
+    computed: {
+      visible: {
+        get() {
+          return this.value;
+        },
+        set(val) {
+          this.$emit('input', val);
+        },
+      },
+      canSubmit() {
+        if (!this.form.teacherId || !this.form.title.trim()) return false;
+        if (this.isEdit) return true;
+        return !this.uploading && this.fileMd5 !== '';
+      },
     },
-    async loadTagListForEdit(tagIds) {
-      try {
-        const res = await resourceTagApi.tagList();
-        const allTags = res.data || [];
-        if (allTags.length > 0 && tagIds.length > 0) {
-          const matchedTag = allTags.find(t => t.id === tagIds[0]);
-          if (matchedTag) {
-            this.form.categoryId = matchedTag.categoryId;
-            await this.loadTagList(matchedTag.categoryId);
+    watch: {
+      value(val) {
+        if (val) {
+          this.loadTeacherOptions();
+          this.loadCategoryOptions();
+          if (this.isEdit && this.editData) {
+            this.loadDetail(this.editData.id);
+          } else {
+            this.initForm();
           }
         }
-      } catch (e) {
-        console.error(e);
-      }
+      },
     },
-    async loadTeacherOptions() {
-      try {
-        const res = await teacherApi.page({ pageNum: 1, pageSize: 9999 });
-        this.teacherOptions = res.data?.list || [];
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async loadCategoryOptions() {
-      try {
-        const res = await resourceTagApi.categoryList();
-        this.categoryOptions = res.data || [];
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async loadTagList(categoryId) {
-      try {
-        const res = await resourceTagApi.tagList(categoryId);
-        this.tagList = res.data || [];
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    handleTeacherChange(teacherId) {
-      const teacher = this.teacherOptions.find(t => t.id === teacherId);
-      if (teacher) {
-        if (teacher.teachingList && teacher.teachingList.length > 0) {
-          const teaching = teacher.teachingList[0];
-          this.form.subjectId = teaching.subjectId || '';
-          this.form.gradeId = teaching.gradeId || '';
+    methods: {
+      async loadDetail(id) {
+        try {
+          const res = await publicResourceApi.getById(id);
+          this.detailData = res.data || {};
+          this.initFormWithDetail(this.detailData);
+        } catch (e) {
+          console.error(e);
+          this.initForm();
         }
-        if (teacher.stageId) {
-          this.form.stageId = teacher.stageId;
-        }
-      }
-    },
-    handleCategoryChange(categoryId) {
-      this.form.tagIds = [];
-      if (categoryId) {
-        this.loadTagList(categoryId);
-      } else {
+      },
+      initForm() {
+        this.form = {
+          teacherId: '',
+          title: '',
+          categoryId: '',
+          tagIds: [],
+          description: '',
+          stageId: '',
+          gradeId: '',
+          subjectId: '',
+        };
         this.tagList = [];
-      }
-    },
-    isTagSelected(tagId) {
-      return this.form.tagIds.includes(tagId);
-    },
-    handleTagChange(tagId, event) {
-      const checked = event.target.checked;
-      if (checked) {
-        if (this.form.tagIds.length < 3) {
-          this.form.tagIds.push(tagId);
-        }
-      } else {
-        this.form.tagIds = this.form.tagIds.filter(id => id !== tagId);
-      }
-    },
-    triggerFileInput() {
-      this.$refs.fileInput.click();
-    },
-    handleFileSelect(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
-        this.$message.warning('仅支持上传 MP4 格式文件');
-        return;
-      }
-      this.uploadFile = file;
-      this.fileMd5 = '';
-      this.uploadProgress = 0;
-      this.uploadStatus = '';
-      this.uploadProgressText = '';
-      this.startUpload(file);
-    },
-    removeFile() {
-      this.uploadFile = null;
-      this.fileMd5 = '';
-      this.uploadProgress = 0;
-      this.uploadStatus = '';
-      this.uploadProgressText = '';
-      this.uploading = false;
-      if (this.$refs.fileInput) {
-        this.$refs.fileInput.value = '';
-      }
-    },
-    async startUpload(file) {
-      this.uploading = true;
-      try {
-        if (file.size <= SIZE_LIMIT) {
-          await this.uploadSmallFile(file);
-        } else {
-          await this.uploadLargeFile(file);
-        }
-      } catch (e) {
-        console.error(e);
-        this.uploadStatus = 'exception';
-        this.uploadProgressText = '上传失败，请重试';
+        this.uploadFile = null;
+        this.fileMd5 = '';
+        this.uploadProgress = 0;
+        this.uploadStatus = '';
+        this.uploadProgressText = '';
         this.uploading = false;
-      }
-    },
-    async uploadSmallFile(file) {
-      this.uploadProgressText = '正在上传...';
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const res = await publicResourceApi.uploadVideo(formData);
-        this.fileMd5 = res.data?.fileMd5 || '';
+        this.submitting = false;
+        this.detailData = null;
+      },
+      initFormWithDetail(detail) {
+        this.form = {
+          teacherId: detail.teacherId || '',
+          title: detail.title || '',
+          categoryId: '',
+          tagIds: detail.tagIds || [],
+          description: detail.description || '',
+          stageId: detail.stageId || '',
+          gradeId: detail.gradeId || '',
+          subjectId: detail.subjectId || '',
+        };
+        this.uploadFile = null;
+        this.fileMd5 = '';
+        this.uploadProgress = 0;
+        this.uploadStatus = '';
+        this.uploadProgressText = '';
+        this.uploading = false;
+        this.submitting = false;
+
+        if (detail.tagIds && detail.tagIds.length > 0) {
+          this.loadTagListForEdit(detail.tagIds);
+        }
+      },
+      async loadTagListForEdit(tagIds) {
+        try {
+          const res = await resourceTagApi.tagList();
+          const allTags = res.data || [];
+          if (allTags.length > 0 && tagIds.length > 0) {
+            const matchedTag = allTags.find(t => t.id === tagIds[0]);
+            if (matchedTag) {
+              this.form.categoryId = matchedTag.categoryId;
+              await this.loadTagList(matchedTag.categoryId);
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+      async loadTeacherOptions() {
+        try {
+          const res = await teacherApi.page({ pageNum: 1, pageSize: 9999 });
+          this.teacherOptions = res.data?.list || [];
+        } catch (e) {
+          console.error(e);
+        }
+      },
+      async loadCategoryOptions() {
+        try {
+          const res = await resourceTagApi.categoryList();
+          this.categoryOptions = res.data || [];
+        } catch (e) {
+          console.error(e);
+        }
+      },
+      async loadTagList(categoryId) {
+        try {
+          const res = await resourceTagApi.tagList(categoryId);
+          this.tagList = res.data || [];
+        } catch (e) {
+          console.error(e);
+        }
+      },
+      handleTeacherChange(teacherId) {
+        const teacher = this.teacherOptions.find(t => t.id === teacherId);
+        if (teacher) {
+          if (teacher.teachingList && teacher.teachingList.length > 0) {
+            const teaching = teacher.teachingList[0];
+            this.form.subjectId = teaching.subjectId || '';
+            this.form.gradeId = teaching.gradeId || '';
+          }
+          if (teacher.stageId) {
+            this.form.stageId = teacher.stageId;
+          }
+        }
+      },
+      handleCategoryChange(categoryId) {
+        this.form.tagIds = [];
+        if (categoryId) {
+          this.loadTagList(categoryId);
+        } else {
+          this.tagList = [];
+        }
+      },
+      isTagSelected(tagId) {
+        return this.form.tagIds.includes(tagId);
+      },
+      handleTagChange(tagId, event) {
+        const checked = event.target.checked;
+        if (checked) {
+          if (this.form.tagIds.length < 3) {
+            this.form.tagIds.push(tagId);
+          }
+        } else {
+          this.form.tagIds = this.form.tagIds.filter(id => id !== tagId);
+        }
+      },
+      triggerFileInput() {
+        this.$refs.fileInput.click();
+      },
+      handleFileSelect(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
+          this.$message.warning('仅支持上传 MP4 格式文件');
+          return;
+        }
+        this.uploadFile = file;
+        this.fileMd5 = '';
+        this.uploadProgress = 0;
+        this.uploadStatus = '';
+        this.uploadProgressText = '';
+        this.startUpload(file);
+      },
+      removeFile() {
+        this.uploadFile = null;
+        this.fileMd5 = '';
+        this.uploadProgress = 0;
+        this.uploadStatus = '';
+        this.uploadProgressText = '';
+        this.uploading = false;
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
+        }
+      },
+      async startUpload(file) {
+        this.uploading = true;
+        try {
+          if (file.size <= SIZE_LIMIT) {
+            await this.uploadSmallFile(file);
+          } else {
+            await this.uploadLargeFile(file);
+          }
+        } catch (e) {
+          console.error(e);
+          this.uploadStatus = 'exception';
+          this.uploadProgressText = '上传失败，请重试';
+          this.uploading = false;
+        }
+      },
+      async uploadSmallFile(file) {
+        this.uploadProgressText = '正在上传...';
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const res = await publicResourceApi.uploadVideo(formData);
+          this.fileMd5 = res.data?.fileMd5 || '';
+          this.uploadProgress = 100;
+          this.uploadStatus = 'success';
+          this.uploadProgressText = '上传完成';
+          this.uploading = false;
+        } catch (e) {
+          this.uploadStatus = 'exception';
+          this.uploadProgressText = '上传失败';
+          this.uploading = false;
+          throw e;
+        }
+      },
+      async uploadLargeFile(file) {
+        this.uploadProgressText = '正在计算文件MD5...';
+        const fileMd5 = await this.calculateFileMd5(file);
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+        this.uploadProgressText = `开始分片上传，共 ${totalChunks} 个分片`;
+
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+          const start = chunkIndex * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const chunk = file.slice(start, end);
+
+          const formData = new FormData();
+          formData.append('chunkFile', chunk);
+          formData.append('chunkIndex', chunkIndex);
+          formData.append('totalChunks', totalChunks);
+          formData.append('fileMd5', fileMd5);
+
+          await publicResourceApi.uploadChunk(formData);
+          this.uploadProgress = Math.round(((chunkIndex + 1) / totalChunks) * 90);
+          this.uploadProgressText = `分片 ${chunkIndex + 1}/${totalChunks} 上传完成`;
+        }
+
+        this.uploadProgressText = '正在合并分片...';
+        const mergeRes = await publicResourceApi.mergeChunks({
+          fileMd5: fileMd5,
+          fileName: file.name,
+          totalChunks: totalChunks,
+        });
+
+        this.fileMd5 = mergeRes.data?.fileMd5 || '';
         this.uploadProgress = 100;
         this.uploadStatus = 'success';
         this.uploadProgressText = '上传完成';
         this.uploading = false;
-      } catch (e) {
-        this.uploadStatus = 'exception';
-        this.uploadProgressText = '上传失败';
-        this.uploading = false;
-        throw e;
-      }
-    },
-    async uploadLargeFile(file) {
-      this.uploadProgressText = '正在计算文件MD5...';
-      const fileMd5 = await this.calculateFileMd5(file);
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      },
+      calculateFileMd5(file) {
+        return new Promise((resolve, reject) => {
+          const spark = new SparkMD5.ArrayBuffer();
+          const reader = new FileReader();
+          const chunkSize = 2 * 1024 * 1024;
+          const totalChunks = Math.ceil(file.size / chunkSize);
+          let currentChunk = 0;
 
-      this.uploadProgressText = `开始分片上传，共 ${totalChunks} 个分片`;
+          reader.onload = e => {
+            spark.append(e.target.result);
+            currentChunk++;
+            if (currentChunk < totalChunks) {
+              const start = currentChunk * chunkSize;
+              const end = Math.min(start + chunkSize, file.size);
+              reader.readAsArrayBuffer(file.slice(start, end));
+            } else {
+              resolve(spark.end());
+            }
+          };
 
-      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-        const start = chunkIndex * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-
-        const formData = new FormData();
-        formData.append('chunkFile', chunk);
-        formData.append('chunkIndex', chunkIndex);
-        formData.append('totalChunks', totalChunks);
-        formData.append('fileMd5', fileMd5);
-
-        await publicResourceApi.uploadChunk(formData);
-        this.uploadProgress = Math.round(((chunkIndex + 1) / totalChunks) * 90);
-        this.uploadProgressText = `分片 ${chunkIndex + 1}/${totalChunks} 上传完成`;
-      }
-
-      this.uploadProgressText = '正在合并分片...';
-      const mergeRes = await publicResourceApi.mergeChunks({
-        fileMd5: fileMd5,
-        fileName: file.name,
-        totalChunks: totalChunks,
-      });
-
-      this.fileMd5 = mergeRes.data?.fileMd5 || '';
-      this.uploadProgress = 100;
-      this.uploadStatus = 'success';
-      this.uploadProgressText = '上传完成';
-      this.uploading = false;
-    },
-    calculateFileMd5(file) {
-      return new Promise((resolve, reject) => {
-        const spark = new SparkMD5.ArrayBuffer();
-        const reader = new FileReader();
-        const chunkSize = 2 * 1024 * 1024;
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        let currentChunk = 0;
-
-        reader.onload = e => {
-          spark.append(e.target.result);
-          currentChunk++;
-          if (currentChunk < totalChunks) {
-            const start = currentChunk * chunkSize;
-            const end = Math.min(start + chunkSize, file.size);
-            reader.readAsArrayBuffer(file.slice(start, end));
-          } else {
-            resolve(spark.end());
-          }
-        };
-
-        reader.onerror = e => reject(e);
-        reader.readAsArrayBuffer(file.slice(0, Math.min(chunkSize, file.size)));
-      });
-    },
-    formatFileSize(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    },
-    handleClose() {
-      this.$emit('close');
-    },
-    async handleSubmit() {
-      if (!this.form.teacherId) {
-        this.$message.warning('请选择主讲教师');
-        return;
-      }
-      if (!this.form.title.trim()) {
-        this.$message.warning('请输入资源标题');
-        return;
-      }
-
-      this.submitting = true;
-      try {
-        const data = {
-          title: this.form.title,
-          teacherId: this.form.teacherId,
-          tagIds: this.form.tagIds,
-          description: this.form.description,
-          stageId: this.form.stageId || undefined,
-          gradeId: this.form.gradeId || undefined,
-          subjectId: this.form.subjectId || undefined,
-        };
-
-        if (this.isEdit) {
-          data.id = this.editData.id;
-          await publicResourceApi.update(this.editData.id, data);
-          this.$message.success('编辑成功');
-        } else {
-          if (!this.fileMd5) {
-            this.$message.warning('请上传资源文件');
-            this.submitting = false;
-            return;
-          }
-          data.fileMd5 = this.fileMd5;
-          await publicResourceApi.add(data);
-          this.$message.success('新增成功');
+          reader.onerror = e => reject(e);
+          reader.readAsArrayBuffer(file.slice(0, Math.min(chunkSize, file.size)));
+        });
+      },
+      formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      },
+      handleClose() {
+        this.$emit('close');
+      },
+      async handleSubmit() {
+        if (!this.form.teacherId) {
+          this.$message.warning('请选择主讲教师');
+          return;
         }
-        this.$emit('confirm');
-        this.visible = false;
-      } catch (e) {
-        console.error(e);
-      } finally {
-        this.submitting = false;
-      }
+        if (!this.form.title.trim()) {
+          this.$message.warning('请输入资源标题');
+          return;
+        }
+
+        this.submitting = true;
+        try {
+          const data = {
+            title: this.form.title,
+            teacherId: this.form.teacherId,
+            tagIds: this.form.tagIds,
+            description: this.form.description,
+            stageId: this.form.stageId || undefined,
+            gradeId: this.form.gradeId || undefined,
+            subjectId: this.form.subjectId || undefined,
+            publishStatus: 0,
+          };
+
+          if (this.isEdit) {
+            data.id = this.editData.id;
+            await publicResourceApi.update(this.editData.id, data);
+            this.$message.success('编辑成功');
+          } else {
+            if (!this.fileMd5) {
+              this.$message.warning('请上传资源文件');
+              this.submitting = false;
+              return;
+            }
+            data.fileMd5 = this.fileMd5;
+            await publicResourceApi.add(data);
+            this.$message.success('新增成功');
+          }
+          this.$emit('confirm');
+          this.visible = false;
+        } catch (e) {
+          console.error(e);
+        } finally {
+          this.submitting = false;
+        }
+      },
     },
-  },
-};
+  };
 </script>
 
 <style lang="scss" scoped>
-::v-deep .resource-form-dialog .el-dialog__header {
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-  padding: 16px 24px;
-  margin-right: 0;
-  .el-dialog__title {
-    color: black;
+  ::v-deep .resource-form-dialog .el-dialog__header {
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 16px 24px;
+    margin-right: 0;
+    .el-dialog__title {
+      color: black;
+    }
+    .el-dialog__close {
+      color: black !important;
+    }
   }
-  .el-dialog__close {
-    color: black !important;
-  }
-}
 
-::v-deep .resource-form-dialog .el-dialog__body {
-  padding: 24px;
-}
+  ::v-deep .resource-form-dialog .el-dialog__body {
+    padding: 24px;
+  }
 </style>

@@ -23,6 +23,7 @@ import resourceTags from '@/components/views/resource/resourceTags.vue';
 import resourceTypes from '@/components/views/resource/resourceTypes.vue';
 import resourcePersonal from '@/components/views/resource/resourcePersonal.vue';
 import resourceCommon from '@/components/views/resource/resourceCommon.vue';
+import resourceCommonDetail from '@/components/views/resource/resourceCommonDetail.vue';
 import DataBoard from '@/components/views/dataBoard/index.vue';
 import HardwareTerminal from '@/components/views/cloudMeeting/hardwareTerminal.vue';
 import SoftwareTerminal from '@/components/views/cloudMeeting/softwareTerminal.vue';
@@ -93,6 +94,13 @@ const routes = [
         path: 'resource-common',
         name: 'resource-common',
         component: resourceCommon,
+      },
+      // 资源库管理-公共资源详情
+      {
+        path: 'resource-common-detail',
+        name: 'resource-common-detail',
+        component: resourceCommonDetail,
+        meta: { title: '资源详情' },
       },
       // 资源库管理-标签管理
       {

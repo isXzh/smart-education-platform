@@ -140,7 +140,7 @@
                 <div
                   class="w-20 h-14 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-blue-600 shrink-0 overflow-hidden"
                 >
-                  <img v-if="row.coverUrl" :src="row.coverUrl" class="w-full h-full object-cover" />
+                  <img v-if="row.coverUrl" :src="row.coverUrlData" class="w-full h-full object-cover" />
                   <i v-else class="el-icon-video-play text-lg"></i>
                 </div>
                 <div class="min-w-0">
@@ -202,6 +202,14 @@
           <el-table-column label="操作" width="180" align="center">
             <template #default="{ row }">
               <div class="flex items-center justify-center gap-1">
+                <el-button
+                  type="text"
+                  size="small"
+                  class="!text-blue-600 !h-8 !px-2"
+                  @click="handleView(row)"
+                >
+                  <i class="el-icon-view mr-1"></i>查看
+                </el-button>
                 <el-button
                   v-if="row.publishStatus === 0"
                   type="text"
@@ -346,7 +354,13 @@
           if (this.filterSubjectId) params.subjectId = this.filterSubjectId;
           if (this.filterStageId) params.stageId = this.filterStageId;
           const res = await publicResourceApi.page(params);
-          this.tableData = res.data?.records || [];
+          this.tableData =
+            res.data?.records.map(i => {
+              if (i.coverUrl) {
+                i.coverUrlData = `${window.businessURL}${i.coverUrl}`;
+              }
+              return i;
+            }) || [];
           this.total = res.data?.total || 0;
         } catch (e) {
           console.error(e);
@@ -490,6 +504,12 @@
       },
       handleFormClose() {
         this.editData = null;
+      },
+      handleView(row) {
+        this.$router.push({
+          path: '/resource-common-detail',
+          query: { id: row.id },
+        });
       },
       formatFileSize(bytes) {
         if (!bytes) return '';

@@ -104,7 +104,7 @@
                     </div>
                   </div>
                 </div>
-                <el-dropdown-item divided command="profile">
+                <el-dropdown-item command="profile">
                   <i class="el-icon-user"></i>
                   <span>个人中心</span>
                 </el-dropdown-item>
@@ -928,12 +928,12 @@
     .el-dropdown-menu__item {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       padding: 10px 16px;
       font-size: 14px;
       color: #606266;
       line-height: 1.5;
-      justify-content: center;
 
       i {
         font-size: 16px;

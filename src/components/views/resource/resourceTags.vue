@@ -1,5 +1,5 @@
 <template>
-    <!-- 标签管理 -->
+  <!-- 标签管理 -->
   <div class="p-6 common-container">
     <!-- 面包屑 -->
     <div class="mb-6">
@@ -26,7 +26,12 @@
                 <p class="text-xs text-gray-400">共 {{ categories.length }} 个分类</p>
               </div>
             </div>
-            <el-button type="primary" size="small" class="!h-8 !px-3 !text-xs !bg-[#1677FF] !border-[#1677FF] !flex !items-center !justify-center" @click="openAddCategory">
+            <el-button
+              type="primary"
+              size="small"
+              class="!h-8 !px-3 !text-xs !bg-[#1677FF] !border-[#1677FF] !flex !items-center !justify-center"
+              @click="openAddCategory"
+            >
               <i class="el-icon-plus mr-1"></i>
               新增
             </el-button>
@@ -34,12 +39,7 @@
           <!-- 分类搜索 -->
           <div class="relative">
             <i class="el-icon-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <el-input
-              v-model="categorySearch"
-              placeholder="搜索分类..."
-              class="!pl-9"
-              size="small"
-            />
+            <el-input v-model="categorySearch" placeholder="搜索分类..." class="!pl-9" size="small" />
           </div>
         </div>
 
@@ -51,20 +51,20 @@
               'flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all mb-1 border',
               selectedCategoryId === null
                 ? 'bg-blue-50 border-blue-100 shadow-sm'
-                : 'hover:bg-gray-50 border-transparent'
+                : 'hover:bg-gray-50 border-transparent',
             ]"
             @click="selectedCategoryId = null"
           >
             <div
               :class="[
                 'w-8 h-8 rounded-lg flex items-center justify-center',
-                selectedCategoryId === null ? 'bg-blue-100' : 'bg-gray-100'
+                selectedCategoryId === null ? 'bg-blue-100' : 'bg-gray-100',
               ]"
             >
               <i
                 :class="[
                   'el-icon-folder-opened text-lg',
-                  selectedCategoryId === null ? 'text-[#1677FF]' : 'text-gray-500'
+                  selectedCategoryId === null ? 'text-[#1677FF]' : 'text-gray-500',
                 ]"
               ></i>
             </div>
@@ -84,20 +84,20 @@
                 'group flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all border',
                 selectedCategoryId === category.id
                   ? 'bg-blue-50 border-blue-100 shadow-sm'
-                  : 'hover:bg-gray-50 border-transparent'
+                  : 'hover:bg-gray-50 border-transparent',
               ]"
               @click="selectedCategoryId = category.id"
             >
               <div
                 :class="[
                   'w-8 h-8 rounded-lg flex items-center justify-center',
-                  selectedCategoryId === category.id ? 'bg-blue-100' : 'bg-gray-100 group-hover:bg-white'
+                  selectedCategoryId === category.id ? 'bg-blue-100' : 'bg-gray-100 group-hover:bg-white',
                 ]"
               >
                 <i
                   :class="[
                     'el-icon-price-tag text-lg',
-                    selectedCategoryId === category.id ? 'text-[#1677FF]' : 'text-gray-500'
+                    selectedCategoryId === category.id ? 'text-[#1677FF]' : 'text-gray-500',
                   ]"
                 ></i>
               </div>
@@ -108,20 +108,24 @@
                 <el-tag size="mini" variant="outline" class="!border-gray-200 !text-gray-500">
                   {{ getTagCount(category.id) }}
                 </el-tag>
-                <el-dropdown trigger="click" @command="(cmd) => handleCategoryCommand(cmd, category)" @click.native.stop>
-                  <button
-                    class="p-1.5 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                <el-dropdown trigger="click" @command="cmd => handleCategoryCommand(cmd, category)" @click.native.stop>
+                  <button class="p-1.5 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                     <i class="el-icon-more text-gray-400"></i>
                   </button>
                   <el-dropdown-menu slot="dropdown">
-                    <el-dropdown-item command="edit" :disabled="category.referenceCount > 0">
+                    <el-dropdown-item command="edit">
                       <i class="el-icon-edit text-gray-500 mr-2"></i>
                       编辑
                     </el-dropdown-item>
                     <el-dropdown-item command="delete" class="!text-red-600" :disabled="category.referenceCount > 0">
                       <i class="el-icon-delete text-red-500 mr-2"></i>
-                      <span :class="{ 'text-red-600': category.referenceCount <= 0, 'text-gray-400': category.referenceCount > 0 }">删除</span>
+                      <span
+                        :class="{
+                          'text-red-600': category.referenceCount <= 0,
+                          'text-gray-400': category.referenceCount > 0,
+                        }"
+                        >删除</span
+                      >
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
@@ -137,19 +141,24 @@
         <div class="px-6 py-4 border-b border-gray-100">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200"
+              >
                 <i class="el-icon-price-tag text-white text-xl"></i>
               </div>
               <div>
                 <h3 class="font-semibold text-gray-900">
                   {{ selectedCategory ? `${selectedCategory.name} - 标签` : '全部标签' }}
                 </h3>
-                <p class="text-xs text-gray-400">
-                  共 {{ filteredTags.length }} 个标签
-                </p>
+                <p class="text-xs text-gray-400">共 {{ filteredTags.length }} 个标签</p>
               </div>
             </div>
-            <el-button type="primary" class="!h-9 !px-4 !bg-[#1677FF] !border-[#1677FF]" @click="openAddTag">
+            <el-button
+              type="primary"
+              :disabled="!selectedCategoryId"
+              class="!h-9 !px-4 !bg-[#1677FF] !border-[#1677FF]"
+              @click="openAddTag"
+            >
               <i class="el-icon-plus mr-1"></i>
               新增标签
             </el-button>
@@ -159,20 +168,13 @@
           <div class="flex items-center gap-3">
             <div class="relative flex-1 max-w-[280px]">
               <i class="el-icon-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <el-input
-                v-model="searchKeyword"
-                placeholder="搜索标签名称或描述..."
-                class="!pl-10"
-                size="small"
-              />
+              <el-input v-model="searchKeyword" placeholder="搜索标签名称或描述..." class="!pl-10" size="small" />
             </div>
-            <div class="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+            <!-- <div class="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
               <button
                 :class="[
                   'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                  filterStatus === 'all'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                  filterStatus === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
                 ]"
                 @click="filterStatus = 'all'"
               >
@@ -183,7 +185,7 @@
                   'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                   filterStatus === 'enabled'
                     ? 'bg-white text-green-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500 hover:text-gray-700',
                 ]"
                 @click="filterStatus = 'enabled'"
               >
@@ -194,13 +196,13 @@
                   'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                   filterStatus === 'disabled'
                     ? 'bg-white text-gray-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500 hover:text-gray-700',
                 ]"
                 @click="filterStatus = 'disabled'"
               >
                 已禁用
               </button>
-            </div>
+            </div> -->
           </div>
         </div>
 
@@ -222,7 +224,9 @@
             >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
+                  <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center"
+                  >
                     <i class="el-icon-price-tag text-[#1677FF] text-xl"></i>
                   </div>
                   <div>
@@ -232,13 +236,13 @@
                     </el-tag>
                   </div>
                 </div>
-                <el-switch
+                <!-- <el-switch
                   v-model="tag.status"
                   active-value="enabled"
                   inactive-value="disabled"
                   :disabled="tag.referenceCount > 0"
                   @change="() => toggleTagStatus(tag)"
-                />
+                /> -->
               </div>
 
               <p class="text-sm text-gray-500 mb-4 line-clamp-2 min-h-[40px]">
@@ -250,15 +254,18 @@
                 <div class="flex items-center gap-1">
                   <button
                     class="p-2 rounded-lg transition-colors"
-                    :class="tag.referenceCount > 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-blue-50 text-gray-400 hover:text-blue-600'"
-                    :disabled="tag.referenceCount > 0"
+                    :class="'hover:bg-blue-50 text-gray-400 hover:text-blue-600'"
                     @click="openEditTag(tag)"
                   >
                     <i class="el-icon-edit"></i>
                   </button>
                   <button
                     class="p-2 rounded-lg transition-colors"
-                    :class="tag.referenceCount > 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-red-50 text-gray-400 hover:text-red-600'"
+                    :class="
+                      tag.referenceCount > 0
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : 'hover:bg-red-50 text-gray-400 hover:text-red-600'
+                    "
                     :disabled="tag.referenceCount > 0"
                     @click="openDeleteTag(tag)"
                   >
@@ -281,10 +288,7 @@
     />
 
     <!-- 分类删除确认 -->
-    <CategoryDeleteDialog
-      v-model="showCategoryDeleteConfirm"
-      @confirm="confirmDeleteCategory"
-    />
+    <CategoryDeleteDialog v-model="showCategoryDeleteConfirm" @confirm="confirmDeleteCategory" />
 
     <!-- 标签弹窗 -->
     <TagDialog
@@ -297,285 +301,283 @@
     />
 
     <!-- 标签删除确认 -->
-    <TagDeleteDialog
-      v-model="showTagDeleteConfirm"
-      @confirm="confirmDeleteTag"
-    />
+    <TagDeleteDialog v-model="showTagDeleteConfirm" @confirm="confirmDeleteTag" />
   </div>
 </template>
 
 <script>
-import CategoryDialog from './resourceTagsDialog/CategoryDialog.vue';
-import CategoryDeleteDialog from './resourceTagsDialog/CategoryDeleteDialog.vue';
-import TagDialog from './resourceTagsDialog/TagDialog.vue';
-import TagDeleteDialog from './resourceTagsDialog/TagDeleteDialog.vue';
-import resourceTagApi from '@/api/resourceTag.js';
+  import CategoryDialog from './resourceTagsDialog/CategoryDialog.vue';
+  import CategoryDeleteDialog from './resourceTagsDialog/CategoryDeleteDialog.vue';
+  import TagDialog from './resourceTagsDialog/TagDialog.vue';
+  import TagDeleteDialog from './resourceTagsDialog/TagDeleteDialog.vue';
+  import resourceTagApi from '@/api/resourceTag.js';
 
-export default {
-  name: 'ResourceTags',
-  components: {
-    CategoryDialog,
-    CategoryDeleteDialog,
-    TagDialog,
-    TagDeleteDialog,
-  },
-  data() {
-    return {
-      categories: [],
-      tags: [],
-      selectedCategoryId: null,
-      categorySearch: '',
-      searchKeyword: '',
-      filterStatus: 'all',
-      showCategoryModal: false,
-      showCategoryDeleteConfirm: false,
-      editingCategory: null,
-      deletingCategoryId: null,
-      showTagModal: false,
-      showTagDeleteConfirm: false,
-      editingTag: null,
-      deletingTagId: null,
-    };
-  },
-  computed: {
-    filteredCategories() {
-      return this.categories.filter((cat) =>
-        cat.name.toLowerCase().includes(this.categorySearch.toLowerCase())
-      );
+  export default {
+    name: 'ResourceTags',
+    components: {
+      CategoryDialog,
+      CategoryDeleteDialog,
+      TagDialog,
+      TagDeleteDialog,
     },
-    filteredTags() {
-      return this.tags.filter((tag) => {
-        const matchKeyword = tag.name.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
-                            (tag.description || '').toLowerCase().includes(this.searchKeyword.toLowerCase());
-        const matchStatus = this.filterStatus === 'all' || tag.status === this.filterStatus;
-        const matchCategory = !this.selectedCategoryId || tag.categoryId === this.selectedCategoryId;
-        return matchKeyword && matchStatus && matchCategory;
-      });
+    data() {
+      return {
+        categories: [],
+        tags: [],
+        selectedCategoryId: null,
+        categorySearch: '',
+        searchKeyword: '',
+        filterStatus: 'all',
+        showCategoryModal: false,
+        showCategoryDeleteConfirm: false,
+        editingCategory: null,
+        deletingCategoryId: null,
+        showTagModal: false,
+        showTagDeleteConfirm: false,
+        editingTag: null,
+        deletingTagId: null,
+      };
     },
-    selectedCategory() {
-      return this.categories.find((c) => c.id === this.selectedCategoryId);
+    computed: {
+      filteredCategories() {
+        return this.categories.filter(cat => cat.name.toLowerCase().includes(this.categorySearch.toLowerCase()));
+      },
+      filteredTags() {
+        return this.tags.filter(tag => {
+          const matchKeyword =
+            tag.name.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
+            (tag.description || '').toLowerCase().includes(this.searchKeyword.toLowerCase());
+          const matchStatus = this.filterStatus === 'all' || tag.status === this.filterStatus;
+          const matchCategory = !this.selectedCategoryId || tag.categoryId === this.selectedCategoryId;
+          return matchKeyword && matchStatus && matchCategory;
+        });
+      },
+      selectedCategory() {
+        return this.categories.find(c => c.id === this.selectedCategoryId);
+      },
     },
-  },
-  mounted() {
-    this.loadCategories();
-    this.loadTags();
-  },
-  methods: {
-    convertStatus(status) {
-      return status === 1 ? 'enabled' : 'disabled';
+    mounted() {
+      this.loadCategories();
+      this.loadTags();
     },
-    toApiStatus(status) {
-      return status === 'enabled' ? 1 : 0;
-    },
-    async loadCategories() {
-      try {
-        const res = await resourceTagApi.categoryList();
-        if (res.code === 200) {
-          this.categories = (res.data || []).map((cat) => ({
-            ...cat,
-            status: this.convertStatus(cat.status),
-          }));
-        }
-      } catch (error) {
-        console.error('加载分类列表失败:', error);
-      }
-    },
-    async loadTags() {
-      try {
-        const res = await resourceTagApi.tagList();
-        if (res.code === 200) {
-          this.tags = (res.data || []).map((tag) => ({
-            ...tag,
-            status: this.convertStatus(tag.status),
-            createdAt: tag.createdAt ? tag.createdAt.split('T')[0] : '',
-          }));
-        }
-      } catch (error) {
-        console.error('加载标签列表失败:', error);
-      }
-    },
-    getTagCount(categoryId) {
-      return this.tags.filter((tag) => tag.categoryId === categoryId).length;
-    },
-    handleCategoryCommand(command, category) {
-      switch (command) {
-        case 'edit':
-          this.openEditCategory(category);
-          break;
-        case 'delete':
-          this.openDeleteCategory(category);
-          break;
-      }
-    },
-    openAddCategory() {
-      this.editingCategory = null;
-      this.showCategoryModal = true;
-    },
-    openEditCategory(category) {
-      if (category.referenceCount > 0) {
-        this.$message.warning('该分类已被引用，无法编辑');
-        return;
-      }
-      this.editingCategory = category;
-      this.showCategoryModal = true;
-    },
-    openDeleteCategory(category) {
-      if (category.referenceCount > 0) {
-        this.$message.warning('该分类已被引用，无法删除');
-        return;
-      }
-      this.deletingCategoryId = category.id;
-      this.showCategoryDeleteConfirm = true;
-    },
-    async handleCategorySubmit(form) {
-      try {
-        if (this.editingCategory) {
-          const res = await resourceTagApi.updateCategory(this.editingCategory.id, {
-            name: form.name.trim(),
-          });
-          if (res.code === 200) {
-            this.$message.success('编辑分类成功');
-            this.loadCategories();
-          }
-        } else {
-          const res = await resourceTagApi.createCategory({
-            name: form.name.trim(),
-          });
-          if (res.code === 200) {
-            this.$message.success('新增分类成功');
-            this.loadCategories();
-          }
-        }
-      } catch (error) {
-        console.error('操作分类失败:', error);
-        this.$message.error('操作分类失败');
-      }
-    },
-    async confirmDeleteCategory() {
-      if (this.deletingCategoryId) {
+    methods: {
+      convertStatus(status) {
+        return status === 1 ? 'enabled' : 'disabled';
+      },
+      toApiStatus(status) {
+        return status === 'enabled' ? 1 : 0;
+      },
+      async loadCategories() {
         try {
-          const res = await resourceTagApi.deleteCategory(this.deletingCategoryId);
+          const res = await resourceTagApi.categoryList();
           if (res.code === 200) {
-            this.$message.success('删除分类成功');
-            if (this.selectedCategoryId === this.deletingCategoryId) {
-              this.selectedCategoryId = null;
+            this.categories = (res.data || []).map(cat => ({
+              ...cat,
+              status: this.convertStatus(cat.status),
+            }));
+          }
+        } catch (error) {
+          console.error('加载分类列表失败:', error);
+        }
+      },
+      async loadTags() {
+        try {
+          const res = await resourceTagApi.tagList();
+          if (res.code === 200) {
+            this.tags = (res.data || []).map(tag => ({
+              ...tag,
+              status: this.convertStatus(tag.status),
+              createdAt: tag.createdAt ? tag.createdAt.split('T')[0] : '',
+            }));
+          }
+        } catch (error) {
+          console.error('加载标签列表失败:', error);
+        }
+      },
+      getTagCount(categoryId) {
+        return this.tags.filter(tag => tag.categoryId === categoryId).length;
+      },
+      handleCategoryCommand(command, category) {
+        switch (command) {
+          case 'edit':
+            this.openEditCategory(category);
+            break;
+          case 'delete':
+            this.openDeleteCategory(category);
+            break;
+        }
+      },
+      openAddCategory() {
+        this.editingCategory = null;
+        this.showCategoryModal = true;
+      },
+      openEditCategory(category) {
+        if (category.referenceCount > 0) {
+          this.$message.warning('该分类已被引用，无法编辑');
+          return;
+        }
+        this.editingCategory = category;
+        this.showCategoryModal = true;
+      },
+      openDeleteCategory(category) {
+        if (category.referenceCount > 0) {
+          this.$message.warning('该分类已被引用，无法删除');
+          return;
+        }
+        this.deletingCategoryId = category.id;
+        this.showCategoryDeleteConfirm = true;
+      },
+      async handleCategorySubmit(form) {
+        try {
+          if (this.editingCategory) {
+            const res = await resourceTagApi.updateCategory(this.editingCategory.id, {
+              name: form.name.trim(),
+            });
+            if (res.code === 200) {
+              this.$message.success('编辑分类成功');
+              this.loadCategories();
             }
-            this.deletingCategoryId = null;
-            this.loadCategories();
-            this.loadTags();
+          } else {
+            const res = await resourceTagApi.createCategory({
+              name: form.name.trim(),
+            });
+            if (res.code === 200) {
+              this.$message.success('新增分类成功');
+              this.loadCategories();
+            }
           }
         } catch (error) {
-          console.error('删除分类失败:', error);
-          this.$message.error('删除分类失败');
+          console.error('操作分类失败:', error);
+          this.$message.error('操作分类失败');
         }
-      }
-    },
-    openAddTag() {
-      this.editingTag = null;
-      this.showTagModal = true;
-    },
-    openEditTag(tag) {
-      if (tag.referenceCount > 0) {
-        this.$message.warning('该标签已被引用，无法编辑');
-        return;
-      }
-      this.editingTag = tag;
-      this.showTagModal = true;
-    },
-    openDeleteTag(tag) {
-      if (tag.referenceCount > 0) {
-        this.$message.warning('该标签已被引用，无法删除');
-        return;
-      }
-      this.deletingTagId = tag.id;
-      this.showTagDeleteConfirm = true;
-    },
-    async handleTagSubmit(form) {
-      try {
-        if (this.editingTag) {
-          const res = await resourceTagApi.updateTag(this.editingTag.id, {
-            id: this.editingTag.id,
-            name: form.name.trim(),
-            categoryId: form.categoryId,
-            description: form.description,
-            status: this.toApiStatus(form.status),
-          });
-          if (res.code === 200) {
-            this.$message.success('编辑标签成功');
-            this.loadTags();
-            this.loadCategories();
-          }
-        } else {
-          const res = await resourceTagApi.createTag({
-            name: form.name.trim(),
-            categoryId: form.categoryId,
-            description: form.description,
-            status: this.toApiStatus(form.status),
-          });
-          if (res.code === 200) {
-            this.$message.success('新增标签成功');
-            this.loadTags();
-            this.loadCategories();
+      },
+      async confirmDeleteCategory() {
+        if (this.deletingCategoryId) {
+          try {
+            const res = await resourceTagApi.deleteCategory(this.deletingCategoryId);
+            if (res.code === 200) {
+              this.$message.success('删除分类成功');
+              if (this.selectedCategoryId === this.deletingCategoryId) {
+                this.selectedCategoryId = null;
+              }
+              this.deletingCategoryId = null;
+              this.loadCategories();
+              this.loadTags();
+            } else {
+              this.$message.error(res.message || '删除分类失败');
+            }
+          } catch (error) {
+            console.error('删除分类失败:', error);
+            this.$message.error('删除分类失败');
           }
         }
-      } catch (error) {
-        console.error('操作标签失败:', error);
-        this.$message.error('操作标签失败');
-      }
-    },
-    async confirmDeleteTag() {
-      if (this.deletingTagId) {
+      },
+      openAddTag() {
+        this.editingTag = null;
+        this.showTagModal = true;
+      },
+      openEditTag(tag) {
+        // if (tag.referenceCount > 0) {
+        //   this.$message.warning('该标签已被引用，无法编辑');
+        //   return;
+        // }
+        this.editingTag = tag;
+        this.showTagModal = true;
+      },
+      openDeleteTag(tag) {
+        if (tag.referenceCount > 0) {
+          this.$message.warning('该标签已被引用，无法删除');
+          return;
+        }
+        this.deletingTagId = tag.id;
+        this.showTagDeleteConfirm = true;
+      },
+      async handleTagSubmit(form) {
         try {
-          const res = await resourceTagApi.deleteTag(this.deletingTagId);
-          if (res.code === 200) {
-            this.$message.success('删除标签成功');
-            this.deletingTagId = null;
-            this.loadTags();
-            this.loadCategories();
+          if (this.editingTag) {
+            const res = await resourceTagApi.updateTag(this.editingTag.id, {
+              id: this.editingTag.id,
+              name: form.name.trim(),
+              categoryId: form.categoryId,
+              description: form.description,
+              status: this.toApiStatus(form.status),
+            });
+            if (res.code === 200) {
+              this.$message.success('编辑标签成功');
+              this.loadTags();
+              this.loadCategories();
+            }
+          } else {
+            const res = await resourceTagApi.createTag({
+              name: form.name.trim(),
+              categoryId: form.categoryId,
+              description: form.description,
+              status: this.toApiStatus(form.status),
+            });
+            if (res.code === 200) {
+              this.$message.success('新增标签成功');
+              this.loadTags();
+              this.loadCategories();
+            }
           }
         } catch (error) {
-          console.error('删除标签失败:', error);
-          this.$message.error('删除标签失败');
+          console.error('操作标签失败:', error);
+          this.$message.error('操作标签失败');
         }
-      }
-    },
-    async toggleTagStatus(tag) {
-      if (tag.referenceCount > 0) {
-        this.$message.warning('该标签已被引用，无法切换状态');
-        this.loadTags();
-        return;
-      }
-      try {
-        const res = await resourceTagApi.toggleTagStatus(tag.id);
-        if (res.code === 200) {
-          this.$message.success('状态切换成功');
+      },
+      async confirmDeleteTag() {
+        if (this.deletingTagId) {
+          try {
+            const res = await resourceTagApi.deleteTag(this.deletingTagId);
+            if (res.code === 200) {
+              this.$message.success('删除标签成功');
+              this.deletingTagId = null;
+              this.loadTags();
+              this.loadCategories();
+            }
+          } catch (error) {
+            console.error('删除标签失败:', error);
+            this.$message.error('删除标签失败');
+          }
         }
-      } catch (error) {
-        console.error('切换标签状态失败:', error);
-        this.$message.error('切换标签状态失败');
-      } finally {
-        this.loadTags();
-      }
+      },
+      async toggleTagStatus(tag) {
+        if (tag.referenceCount > 0) {
+          this.$message.warning('该标签已被引用，无法切换状态');
+          this.loadTags();
+          return;
+        }
+        try {
+          const res = await resourceTagApi.toggleTagStatus(tag.id);
+          if (res.code === 200) {
+            this.$message.success('状态切换成功');
+          }
+        } catch (error) {
+          console.error('切换标签状态失败:', error);
+          this.$message.error('切换标签状态失败');
+        } finally {
+          this.loadTags();
+        }
+      },
     },
-  },
-};
+  };
 </script>
 
 <style lang="scss" scoped>
-.common-container {
-  background: #f5f7fa;
-  min-height: 100%;
-}
+  .common-container {
+    background: #f5f7fa;
+    min-height: 100%;
+  }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-::v-deep .el-switch.is-checked .el-switch__core {
-  border-color: #10b981;
-  background-color: #10b981;
-}
+  ::v-deep .el-switch.is-checked .el-switch__core {
+    border-color: #10b981;
+    background-color: #10b981;
+  }
 </style>

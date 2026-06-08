@@ -27,14 +27,15 @@ export default {
   },
   // 简单上传视频
   uploadVideo(data) {
-    return http.postFileJson('/smartedu-api/base/resource/public/video/upload', data);
+    return http.postFileJson('/api/base/resource/public/video/upload', data);
+    // return http.postFileJson('/smartedu-api/base/resource/public/video/upload', data);
   },
   uploadChunk(data) {
-    return http.postFileJson('/smartedu-api/base/resource/public/video/chunk', data);
+    return http.postFileJson('/api/base/resource/public/video/chunk', data);
   },
   // 合并分片
   mergeChunks(data) {
-    return http.post('/smartedu-api/base/resource/public/video/merge', data);
+    return http.post('/api/base/resource/public/video/merge', data);
   },
   // 替换视频文件
   replaceVideo(id, data) {
@@ -55,5 +56,8 @@ export default {
   // 测试AI平台编目接口
   testCatalog(platformVideoId) {
     return http.get(`/api/base/resource/public/test/catalog/${platformVideoId}`);
+  },
+  proxyImage(url) {
+    return http.get('/api/base/resource/public/proxy/image', { url });
   },
 };

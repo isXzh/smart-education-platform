@@ -8,15 +8,10 @@
   >
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-medium mb-1.5">
-          标签名称 <span class="text-red-500">*</span>
-        </label>
-        <el-input
-          v-model="form.name"
-          placeholder="请输入标签名称"
-        />
+        <label class="block text-sm font-medium mb-1.5"> 标签名称 <span class="text-red-500">*</span> </label>
+        <el-input v-model="form.name" placeholder="请输入标签名称" />
       </div>
-      <div>
+      <!-- <div>
         <label class="block text-sm font-medium mb-1.5">
           所属分类 <span class="text-red-500">*</span>
         </label>
@@ -28,24 +23,18 @@
             :value="category.id"
           />
         </el-select>
-      </div>
+      </div> -->
       <div>
         <label class="block text-sm font-medium mb-1.5">描述</label>
-        <el-input
-          v-model="form.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入标签描述"
-          resize="none"
-        />
+        <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入标签描述" resize="none" />
       </div>
-      <div>
+      <!-- <div>
         <label class="block text-sm font-medium mb-1.5">状态</label>
         <el-select v-model="form.status" class="w-full">
           <el-option label="启用" value="enabled" />
           <el-option label="禁用" value="disabled" />
         </el-select>
-      </div>
+      </div> -->
     </div>
     <div slot="footer" class="flex justify-end gap-3">
       <el-button @click="visible = false">取消</el-button>
@@ -57,89 +46,89 @@
 </template>
 
 <script>
-export default {
-  name: 'TagDialog',
-  props: {
-    value: {
-      type: Boolean,
-      default: false,
-    },
-    isEdit: {
-      type: Boolean,
-      default: false,
-    },
-    editData: {
-      type: Object,
-      default: null,
-    },
-    categories: {
-      type: Array,
-      default: () => [],
-    },
-    defaultCategoryId: {
-      type: [Number, String],
-      default: '',
-    },
-  },
-  data() {
-    return {
-      form: {
-        name: '',
-        categoryId: '',
-        description: '',
-        status: 'enabled',
+  export default {
+    name: 'TagDialog',
+    props: {
+      value: {
+        type: Boolean,
+        default: false,
       },
-    };
-  },
-  computed: {
-    visible: {
-      get() {
-        return this.value;
+      isEdit: {
+        type: Boolean,
+        default: false,
       },
-      set(val) {
-        this.$emit('input', val);
+      editData: {
+        type: Object,
+        default: null,
+      },
+      categories: {
+        type: Array,
+        default: () => [],
+      },
+      defaultCategoryId: {
+        type: [Number, String],
+        default: '',
       },
     },
-    enabledCategories() {
-      return this.categories.filter((c) => c.status === 'enabled');
-    },
-  },
-  watch: {
-    value(val) {
-      if (val) {
-        this.initForm();
-      }
-    },
-  },
-  methods: {
-    initForm() {
-      if (this.isEdit && this.editData) {
-        this.form = {
-          name: this.editData.name,
-          categoryId: this.editData.categoryId,
-          description: this.editData.description,
-          status: this.editData.status,
-        };
-      } else {
-        this.form = {
+    data() {
+      return {
+        form: {
           name: '',
-          categoryId: this.defaultCategoryId,
+          categoryId: '',
           description: '',
           status: 'enabled',
-        };
-      }
+        },
+      };
     },
-    handleClose() {
-      this.$emit('close');
+    computed: {
+      visible: {
+        get() {
+          return this.value;
+        },
+        set(val) {
+          this.$emit('input', val);
+        },
+      },
+      enabledCategories() {
+        return this.categories.filter(c => c.status === 'enabled');
+      },
     },
-    handleSubmit() {
-      if (!this.form.name.trim() || !this.form.categoryId) {
-        this.$message.warning('请填写完整信息');
-        return;
-      }
-      this.$emit('submit', { ...this.form });
-      this.visible = false;
+    watch: {
+      value(val) {
+        if (val) {
+          this.initForm();
+        }
+      },
     },
-  },
-};
+    methods: {
+      initForm() {
+        if (this.isEdit && this.editData) {
+          this.form = {
+            name: this.editData.name,
+            categoryId: this.editData.categoryId,
+            description: this.editData.description,
+            status: this.editData.status,
+          };
+        } else {
+          this.form = {
+            name: '',
+            categoryId: this.defaultCategoryId,
+            description: '',
+            status: 'enabled',
+          };
+        }
+      },
+      handleClose() {
+        this.$emit('close');
+      },
+      handleSubmit() {
+        if (!this.form.name.trim() || !this.form.categoryId) {
+          this.$message.warning('请填写完整信息');
+          return;
+        }
+        this.$emit('submit', { ...this.form });
+        this.visible = false;
+      },
+    },
+  };
 </script>
