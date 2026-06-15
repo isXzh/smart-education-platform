@@ -202,12 +202,7 @@
           <el-table-column label="操作" width="180" align="center">
             <template #default="{ row }">
               <div class="flex items-center justify-center gap-1">
-                <el-button
-                  type="text"
-                  size="small"
-                  class="!text-blue-600 !h-8 !px-2"
-                  @click="handleView(row)"
-                >
+                <el-button type="text" size="small" class="!text-blue-600 !h-8 !px-2" @click="handleView(row)">
                   <i class="el-icon-view mr-1"></i>查看
                 </el-button>
                 <el-button
@@ -357,7 +352,8 @@
           this.tableData =
             res.data?.records.map(i => {
               if (i.coverUrl) {
-                i.coverUrlData = `${window.businessURL}${i.coverUrl}`;
+                i.coverUrlData = `${i.coverUrl}`;
+                // i.coverUrlData = `${window.businessURL}${i.coverUrl}`;
               }
               return i;
             }) || [];

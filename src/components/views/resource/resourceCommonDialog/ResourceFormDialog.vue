@@ -140,9 +140,9 @@
             :show-text="false"
           />
         </div>
-        <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+        <!-- <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
           <i class="el-icon-info"></i>单个文件不超过500MB可直接上传，超过500MB将自动分片上传
-        </p>
+        </p> -->
       </div>
     </div>
 
@@ -398,11 +398,12 @@
       async startUpload(file) {
         this.uploading = true;
         try {
-          if (file.size <= SIZE_LIMIT) {
-            await this.uploadSmallFile(file);
-          } else {
-            await this.uploadLargeFile(file);
-          }
+          // if (file.size <= SIZE_LIMIT) {
+          //   await this.uploadSmallFile(file);
+          // } else {
+          //   await this.uploadLargeFile(file);
+          // }
+          await this.uploadLargeFile(file);
         } catch (e) {
           console.error(e);
           this.uploadStatus = 'exception';

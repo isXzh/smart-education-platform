@@ -608,7 +608,8 @@
         // const normalizedPath = filePath.replace(/\\/g, '/');
         // const fileName = normalizedPath.split('/').pop();
         // return '/uploads/resource/' + fileName;
-        return window.businessURL + filePath;
+        // return window.businessURL + filePath;
+        return filePath;
       },
       getVideoPoster(coverUrl) {
         if (!coverUrl) return '';
@@ -622,7 +623,8 @@
         //   return coverUrl;
         // }
         // return coverUrl;
-        return window.businessURL + coverUrl;
+        // return window.businessURL + coverUrl;
+        return coverUrl;
       },
       getProxiedImageUrl(originalUrl) {
         if (!originalUrl) return '';
