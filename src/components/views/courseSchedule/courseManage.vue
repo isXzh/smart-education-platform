@@ -179,9 +179,7 @@
           </el-table-column>
           <el-table-column prop="location" label="地点" min-width="120">
             <template slot-scope="scope">
-              <span class="location-text">{{
-                (scope.row.mainClassroom && scope.row.location) || '-'
-              }}</span>
+              <span class="location-text">{{ (scope.row.mainClassroom && scope.row.location) || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="80">
@@ -245,23 +243,17 @@
     />
 
     <!-- 批量导入弹窗 -->
-    <ScheduleImportDialog
-      :visible.sync="importDialogVisible"
-      @confirm="handleImportConfirm"
-    />
+    <ScheduleImportDialog :visible.sync="importDialogVisible" @confirm="handleImportConfirm" />
 
     <!-- 预览弹窗 -->
-    <ShowPreview
-      :visible.sync="previewVisible"
-      :data="currentPreviewData"
-    />
+    <ShowPreview :visible.sync="previewVisible" :data="currentPreviewData" />
   </div>
 </template>
 
 <script>
   import NewScheduleModal from '../dialog/NewScheduleModal.vue';
-import ScheduleImportDialog from './dialog/ScheduleImportDialog.vue';
-import ShowPreview from './dialog/showPreview.vue';
+  import ScheduleImportDialog from './dialog/ScheduleImportDialog.vue';
+  import ShowPreview from './dialog/showPreview.vue';
   import schedule from '@/api/schedule';
   import subject from '@/api/subject';
   import grade from '@/api/grade';
@@ -547,6 +539,10 @@ import ShowPreview from './dialog/showPreview.vue';
         this.loadScheduleData();
       },
       handleEdit(row) {
+        if (row.status != 1) {
+          this.$message.warning('只能编辑已排课状态的课程');
+          return;
+        }
         this.modalMode = 'edit';
         this.currentScheduleData = { ...row };
         this.newScheduleVisible = true;
