@@ -166,15 +166,19 @@
               { path: '/schedule-management', title: '排课管理' },
               { path: '/schedule-view', title: '课表视图' },
               { path: '/schedule-calendar', title: '排课日历' },
+              { path: '/reschedule-approval', title: '调课审批' },
             ],
           },
-          // {
-          //   path: '/devices',
-          //   icon: 'el-icon-monitor',
-          //   title: '设备管理',
-          //   expanded: true,
-          //   children: [{ path: '/devices-list', title: '设备列表' }],
-          // },
+          {
+            path: '/devices',
+            icon: 'el-icon-monitor',
+            title: '设备管理',
+            expanded: true,
+            children: [
+              // { path: '/devices-list', title: '设备列表' }
+              { path: '/mobile-security-box', title: '移动保障箱' },
+            ],
+          },
           {
             path: '/cloud-meeting',
             icon: 'el-icon-chat-dot-round',
@@ -191,7 +195,7 @@
             title: '资源库管理',
             expanded: true,
             children: [
-              { path: '/resource-personal', title: '个人资源' },
+              // { path: '/resource-personal', title: '个人资源' },
               { path: '/resource-common', title: '公共资源' },
               { path: '/resource-types', title: '类型管理' },
             ],
@@ -299,7 +303,9 @@
           '/schedule-management': '排课管理',
           '/schedule-view': '课表视图',
           '/schedule-calendar': '排课日历',
+          '/reschedule-approval': '调课审批',
           '/devices': '设备管理',
+          '/mobile-security-box': '移动保障箱',
           '/cloud-meeting': '云会议管理',
           '/cloud-meeting-hardware': '硬件终端',
           '/cloud-meeting-software': '软件终端',

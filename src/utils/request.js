@@ -16,6 +16,25 @@ const service = axios.create({
 let isRefreshing = false;
 // 失败队列（存储需要重试的请求）
 let failedQueue = [];
+let isHandlingKickedOut = false;
+
+const handleKickedOut = (message = '账号已在其他地方登录，您已被迫下线') => {
+  const hasToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('refreshToken');
+
+  if (isHandlingKickedOut && !hasToken) {
+    return;
+  }
+
+  isHandlingKickedOut = true;
+  sessionStorage.removeItem('accessToken');
+  sessionStorage.removeItem('refreshToken');
+  sessionStorage.removeItem('userInfo');
+  Message.error(message);
+
+  if (router.currentRoute.path !== '/login') {
+    router.push('/login').catch(() => {});
+  }
+};
 
 /**
  * 处理队列中的请求
@@ -87,6 +106,11 @@ service.interceptors.response.use(
     // 关闭loading
     if (config.loadingInstance) {
       config.loadingInstance.close();
+    }
+
+    if (res && res.code === 5007) {
+      handleKickedOut(res.message);
+      return Promise.reject(res);
     }
 
     return res;

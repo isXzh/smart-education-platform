@@ -5,7 +5,9 @@ import HomePage from '@/views/HomePage.vue';
 import CourseManage from '@/components/views/courseSchedule/courseManage.vue';
 import CourseView from '@/components/views/courseSchedule/courseView.vue';
 import CourseCalendar from '@/components/views/courseSchedule/courseCalendar.vue';
+import RescheduleApproval from '@/components/views/courseSchedule/rescheduleApproval.vue';
 import DeviceManagement from '@/components/views/deviceResource/devicemanagement.vue';
+import MobileSecurityBox from '@/components/views/deviceResource/mobileSecurityBox.vue';
 import OrganizationalStructure from '@/components/views/InformationManagement/organizationalStructure.vue';
 import ClassPeriod from '@/components/views/InformationManagement/classPeriod.vue';
 import SubjectManagement from '@/components/views/InformationManagement/subjectManagement.vue';
@@ -65,11 +67,25 @@ const routes = [
         name: 'schedule-calendar',
         component: CourseCalendar,
       },
+      // 课程排课-调课审批
+      {
+        path: 'reschedule-approval',
+        name: 'reschedule-approval',
+        component: RescheduleApproval,
+        meta: { title: '调课审批' },
+      },
       // 设备资源管理-设备列表
       {
         path: 'devices-list',
         name: 'devices-list',
         component: DeviceManagement,
+      },
+      // 设备资源管理-移动保障箱
+      {
+        path: 'mobile-security-box',
+        name: 'mobile-security-box',
+        component: MobileSecurityBox,
+        meta: { title: '移动保障箱' },
       },
       // 云会议管理-硬件终端
       {
