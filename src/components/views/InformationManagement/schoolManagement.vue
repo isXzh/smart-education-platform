@@ -172,9 +172,9 @@
                 <span class="text-secondary">{{ row.address }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="创建时间" min-width="110">
+            <el-table-column prop="createdAt" label="创建时间" min-width="120">
               <template #default="{ row }">
-                <span class="text-secondary">{{ row.createdAt.split('T').toString(' ') }}</span>
+                <span class="text-secondary">{{ row.createdAt.split('T').join(' ') }}</span>
               </template>
             </el-table-column>
             <el-table-column label="状态" width="80" align="center">
