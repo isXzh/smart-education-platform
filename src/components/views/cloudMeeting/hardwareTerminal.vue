@@ -327,6 +327,11 @@
       getStatusLabel(status) {
         return String(status) === '0' ? '正常' : '冻结';
       },
+      handleFormConfirm() {
+        this.formDialogVisible = false;
+        this.editingDevice = null;
+        this.loadDeviceList();
+      },
     },
   };
 </script>

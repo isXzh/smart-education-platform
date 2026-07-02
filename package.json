@@ -10,10 +10,12 @@
     "axios": "1.6.8",
     "d3": "^7.8.5",
     "date-fns": "^4.1.0",
+    "echarts": "^4.9.0",
     "element-ui": "2.15.13",
     "qs": "^6.15.1",
     "sortablejs": "^1.15.7",
     "spark-md5": "^3.0.2",
+    "v-charts": "^1.19.0",
     "vue-router": "^3.5.3",
     "vuex": "^3.6.2",
     "vuex-persistedstate": "^4.1.0"

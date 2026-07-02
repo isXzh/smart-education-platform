@@ -129,8 +129,8 @@
                 <span>{{ stageMap[row.stageId] || '-' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="orgNamePath" label="所属组织" min-width="120" />
-            <el-table-column prop="phone" label="手机号" min-width="120" />
+            <el-table-column prop="schoolName" label="所属组织" min-width="140" />
+            <el-table-column prop="phone" label="手机号" min-width="130" />
           </template>
 
           <!-- 学生表格列 -->

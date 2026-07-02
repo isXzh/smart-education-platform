@@ -44,6 +44,20 @@ const http = {
     }
     return request(config);
   },
+  post2(url, params) {
+    const config = {
+      method: 'post',
+      url: url,
+      urlType: 'businessURL',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+    if (params) {
+      config.data = params;
+    }
+    return request(config);
+  },
   postFile(url, params) {
     const config = {
       method: 'post',

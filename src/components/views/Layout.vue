@@ -73,12 +73,79 @@
 
         <!-- 右侧工具栏 -->
         <div class="toolbar">
-          <!-- 消息通知 -->
-          <!-- <div class="toolbar-item">
-            <el-badge :value="3" class="badge-item">
+          <div class="toolbar-item notification-wrapper" ref="notificationRef">
+            <button type="button" class="notification-trigger" @click.stop="toggleNotificationPanel">
               <i class="el-icon-bell"></i>
-            </el-badge>
-          </div> -->
+              <span v-if="unreadCount > 0" class="notification-badge">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
+            </button>
+
+            <transition name="notification-panel">
+              <div v-if="showNotificationPanel" class="notification-panel" @click.stop>
+                <div class="notification-header">
+                  <h3>通知消息</h3>
+                  <div class="notification-actions">
+                    <button
+                      v-if="unreadCount > 0"
+                      type="button"
+                      class="notification-read-all"
+                      @click="handleMarkAllRead"
+                    >
+                      全部已读
+                    </button>
+                    <button
+                      v-if="notifications.length > 0"
+                      type="button"
+                      class="notification-delete"
+                      title="清空通知"
+                      @click="handleDeleteAllNotifications"
+                    >
+                      <i class="el-icon-delete"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="notification-tabs">
+                  <button type="button" class="notification-tab active">调课</button>
+                </div>
+
+                <div class="notification-list">
+                  <div v-if="notifications.length === 0" class="notification-empty">
+                    <i class="el-icon-bell"></i>
+                    <p>暂无通知</p>
+                  </div>
+                  <div v-else class="notification-items">
+                    <div
+                      v-for="item in notifications"
+                      :key="item.id"
+                      :class="['notification-card', { unread: Number(item.isRead) === 0 }]"
+                      @click="handleNotificationClick(item)"
+                    >
+                      <div class="notification-type-icon">
+                        <i class="el-icon-sort"></i>
+                      </div>
+                      <div class="notification-content">
+                        <div class="notification-title-row">
+                          <h4 :class="{ unread: Number(item.isRead) === 0 }">{{ item.title }}</h4>
+                          <span>{{ formatNotificationTime(item.createTime) }}</span>
+                        </div>
+                        <p>{{ item.content }}</p>
+                        <div v-if="Number(item.isRead) === 0" class="notification-unread">
+                          <span></span>
+                          <em>未读</em>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="notifications.length > 0" class="notification-footer">
+                  <button type="button" @click="goRescheduleApproval">查看调课审批 →</button>
+                </div>
+              </div>
+            </transition>
+          </div>
 
           <!-- 用户下拉菜单 -->
           <div class="toolbar-item user-dropdown">
@@ -141,6 +208,7 @@
 <script>
   import auth from '@/api/auth';
   import systemConfig from '@/api/systemConfig';
+  import noticeApi from '@/api/notice';
   export default {
     name: 'Layout',
     data() {
@@ -155,6 +223,16 @@
         platformName: '智慧教育云平台',
         platformDescription: '',
         platformLogoUrl: '',
+        showNotificationPanel: false,
+        notificationFilter: 'all',
+        notifications: [],
+        notificationTimer: null,
+        notificationLoading: false,
+        notificationQuery: {
+          userType: 'admin',
+          pageNum: 1,
+          pageSize: 20,
+        },
         menuItems: [
           { path: '/', icon: 'el-icon-s-home', title: '首页', expanded: false },
           {
@@ -243,15 +321,27 @@
       this.updateBreadcrumbs();
       this.initMenuExpanded();
       this.loadPlatformInfo();
-      this.userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+      this.userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || this.userInfo;
+      this.fetchNotifications();
+      this.startNotificationPolling();
       window.addEventListener('platformInfoUpdated', this.handlePlatformInfoUpdated);
     },
+    mounted() {
+      document.addEventListener('mousedown', this.handleNotificationOutside);
+    },
     beforeDestroy() {
+      this.clearNotificationPolling();
+      document.removeEventListener('mousedown', this.handleNotificationOutside);
       window.removeEventListener('platformInfoUpdated', this.handlePlatformInfoUpdated);
     },
     watch: {
       $route() {
         this.updateBreadcrumbs();
+      },
+    },
+    computed: {
+      unreadCount() {
+        return this.notifications.filter(item => Number(item.isRead) === 0).length;
       },
     },
     methods: {
@@ -368,6 +458,129 @@
             }
           })
           .catch(() => {});
+      },
+
+      isSuccessResponse(response) {
+        return response && (response.code === 200 || response.code === 0 || response.success === true);
+      },
+
+      toggleNotificationPanel() {
+        this.showNotificationPanel = !this.showNotificationPanel;
+        if (this.showNotificationPanel) {
+          this.fetchNotifications();
+        }
+      },
+
+      handleNotificationOutside(event) {
+        const notificationRef = this.$refs.notificationRef;
+        if (notificationRef && !notificationRef.contains(event.target)) {
+          this.showNotificationPanel = false;
+        }
+      },
+
+      startNotificationPolling() {
+        this.clearNotificationPolling();
+        this.notificationTimer = setInterval(() => {
+          this.fetchNotifications();
+        }, 30000);
+      },
+
+      clearNotificationPolling() {
+        if (this.notificationTimer) {
+          clearInterval(this.notificationTimer);
+          this.notificationTimer = null;
+        }
+      },
+
+      async fetchNotifications() {
+        if (this.notificationLoading) {
+          return;
+        }
+        this.notificationLoading = true;
+        try {
+          const response = await noticeApi.page({ ...this.notificationQuery });
+          if (this.isSuccessResponse(response) && response.data) {
+            this.notifications = Array.isArray(response.data.list) ? response.data.list : [];
+          }
+        } catch (error) {
+          console.error('获取通知消息失败:', error);
+        } finally {
+          this.notificationLoading = false;
+        }
+      },
+
+      async handleNotificationClick(item) {
+        if (!item || !item.id) {
+          return;
+        }
+        if (Number(item.isRead) === 0) {
+          try {
+            const response = await noticeApi.markRead(item.id);
+            if (this.isSuccessResponse(response)) {
+              this.notifications = this.notifications.map(notification =>
+                notification.id === item.id ? { ...notification, isRead: 1 } : notification
+              );
+            }
+          } catch (error) {
+            console.error('标记通知已读失败:', error);
+          }
+        }
+        this.showNotificationPanel = false;
+      },
+
+      async handleMarkAllRead() {
+        try {
+          const response = await noticeApi.markAllRead();
+          if (this.isSuccessResponse(response)) {
+            this.notifications = this.notifications.map(item => ({ ...item, isRead: 1 }));
+            this.$message.success('已全部标记为已读');
+          } else {
+            this.$message.error((response && response.message) || '全部已读失败');
+          }
+        } catch (error) {
+          console.error('全部已读失败:', error);
+          this.$message.error('全部已读失败');
+        }
+      },
+
+      async handleDeleteAllNotifications() {
+        const ids = this.notifications.map(item => item.id).filter(id => id !== undefined && id !== null);
+        if (ids.length === 0) {
+          return;
+        }
+        try {
+          const response = await noticeApi.deleteByIds(ids);
+          if (this.isSuccessResponse(response)) {
+            this.notifications = [];
+            this.$message.success('通知已清空');
+          } else {
+            this.$message.error((response && response.message) || '删除通知失败');
+          }
+        } catch (error) {
+          console.error('删除通知失败:', error);
+          this.$message.error('删除通知失败');
+        }
+      },
+
+      goRescheduleApproval() {
+        this.showNotificationPanel = false;
+        if (this.$route.path !== '/reschedule-approval') {
+          this.$router.push('/reschedule-approval');
+        }
+      },
+
+      formatNotificationTime(value) {
+        if (!value) {
+          return '';
+        }
+        const normalizedValue = typeof value === 'string' ? value.replace(/-/g, '/').replace('T', ' ') : value;
+        const date = new Date(normalizedValue);
+        if (Number.isNaN(date.getTime())) {
+          return String(value).slice(0, 5);
+        }
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
       },
 
       async loadPlatformInfo() {
@@ -800,6 +1013,330 @@
               font-size: 11px;
               border: none;
             }
+          }
+
+          &.notification-wrapper {
+            overflow: visible;
+
+            .notification-trigger {
+              position: relative;
+              width: 40px;
+              height: 40px;
+              border: none;
+              border-radius: 8px;
+              background: transparent;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: background 0.2s;
+              padding: 0;
+              outline: none;
+
+              &:hover {
+                background: #f5f7fa;
+              }
+
+              i {
+                font-size: 20px;
+                color: #606266;
+              }
+            }
+
+            .notification-badge {
+              position: absolute;
+              top: -2px;
+              right: -2px;
+              min-width: 18px;
+              height: 18px;
+              padding: 0 5px;
+              background: #ef4444;
+              color: #fff;
+              font-size: 10px;
+              font-weight: 700;
+              border-radius: 999px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              line-height: 18px;
+              box-sizing: border-box;
+            }
+
+            .notification-panel {
+              position: absolute;
+              top: calc(100% + 8px);
+              right: 0;
+              width: 380px;
+              background: #fff;
+              border-radius: 12px;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+              border: 1px solid #e5e7eb;
+              z-index: 50;
+              overflow: hidden;
+              cursor: default;
+            }
+
+            .notification-header {
+              padding: 12px 16px;
+              border-bottom: 1px solid #f3f4f6;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+
+              h3 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: #111827;
+              }
+            }
+
+            .notification-actions {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+            }
+
+            .notification-read-all {
+              padding: 4px 8px;
+              border: none;
+              border-radius: 4px;
+              background: transparent;
+              color: #2563eb;
+              font-size: 12px;
+              line-height: 16px;
+              cursor: pointer;
+              transition: background 0.2s;
+
+              &:hover {
+                background: #eff6ff;
+              }
+            }
+
+            .notification-delete {
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              border: none;
+              border-radius: 4px;
+              background: transparent;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: background 0.2s, color 0.2s;
+
+              i {
+                font-size: 14px;
+                color: #9ca3af;
+              }
+
+              &:hover {
+                background: #fef2f2;
+
+                i {
+                  color: #ef4444;
+                }
+              }
+            }
+
+            .notification-tabs {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              padding: 8px 12px;
+              border-bottom: 1px solid #f3f4f6;
+              background: rgba(249, 250, 251, 0.5);
+            }
+
+            .notification-tab {
+              padding: 4px 12px;
+              border: none;
+              border-radius: 999px;
+              background: transparent;
+              color: #6b7280;
+              font-size: 12px;
+              font-weight: 500;
+              line-height: 16px;
+              cursor: pointer;
+              transition: background 0.2s, color 0.2s;
+
+              &.active {
+                background: #dbeafe;
+                color: #1d4ed8;
+              }
+            }
+
+            .notification-list {
+              max-height: 360px;
+              overflow-y: auto;
+            }
+
+            .notification-empty {
+              height: 136px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              color: #9ca3af;
+
+              i {
+                font-size: 40px;
+                color: #d1d5db;
+                margin-bottom: 8px;
+              }
+
+              p {
+                margin: 0;
+                font-size: 14px;
+                color: #9ca3af;
+              }
+            }
+
+            .notification-items {
+              .notification-card + .notification-card {
+                border-top: 1px solid #f9fafb;
+              }
+            }
+
+            .notification-card {
+              display: flex;
+              gap: 12px;
+              padding: 12px 16px;
+              cursor: pointer;
+              transition: background 0.2s;
+
+              &:hover {
+                background: #f9fafb;
+              }
+
+              &.unread {
+                background: rgba(239, 246, 255, 0.3);
+
+                &:hover {
+                  background: rgba(239, 246, 255, 0.6);
+                }
+              }
+            }
+
+            .notification-type-icon {
+              width: 36px;
+              height: 36px;
+              border-radius: 8px;
+              background: #fffbeb;
+              border: 1px solid #fef3c7;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+
+              i {
+                font-size: 16px;
+                color: #d97706;
+              }
+            }
+
+            .notification-content {
+              flex: 1;
+              min-width: 0;
+            }
+
+            .notification-title-row {
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              gap: 8px;
+
+              h4 {
+                margin: 0;
+                color: #374151;
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 20px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+
+                &.unread {
+                  color: #111827;
+                  font-weight: 600;
+                }
+              }
+
+              span {
+                color: #9ca3af;
+                font-size: 11px;
+                line-height: 18px;
+                flex-shrink: 0;
+                margin-top: 2px;
+              }
+            }
+
+            .notification-content p {
+              margin: 2px 0 0;
+              color: #6b7280;
+              font-size: 12px;
+              line-height: 20px;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+
+            .notification-unread {
+              margin-top: 6px;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+
+              span {
+                width: 6px;
+                height: 6px;
+                background: #ef4444;
+                border-radius: 999px;
+              }
+
+              em {
+                color: #ef4444;
+                font-size: 11px;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 14px;
+              }
+            }
+
+            .notification-footer {
+              padding: 8px 16px;
+              border-top: 1px solid #f3f4f6;
+              background: rgba(249, 250, 251, 0.5);
+              text-align: center;
+
+              button {
+                border: none;
+                background: transparent;
+                color: #2563eb;
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: color 0.2s;
+                padding: 0;
+
+                &:hover {
+                  color: #1d4ed8;
+                }
+              }
+            }
+          }
+
+          .notification-panel-enter-active,
+          .notification-panel-leave-active {
+            transition: opacity 0.2s, transform 0.2s;
+          }
+
+          .notification-panel-enter,
+          .notification-panel-leave-to {
+            opacity: 0;
+            transform: translateY(-8px);
           }
 
           &.user-dropdown {

@@ -179,7 +179,7 @@
           </el-table-column>
           <el-table-column prop="location" label="地点" min-width="120">
             <template slot-scope="scope">
-              <span class="location-text">{{ (scope.row.mainClassroom && scope.row.location) || '-' }}</span>
+              <span class="location-text">{{ scope.row.location }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="80">

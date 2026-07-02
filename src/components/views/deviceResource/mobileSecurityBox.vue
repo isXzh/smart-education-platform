@@ -75,7 +75,13 @@
     <!-- 主表格容器 -->
     <div class="main-card">
       <div class="card-header">
-        <div class="card-title">移动保障箱</div>
+        <div class="card-title-row">
+          <div class="card-title">移动保障箱</div>
+          <button class="map-entry-btn" v-if="false" @click="openDeviceMap">
+            <i class="el-icon-location-outline"></i>
+            设备分布图
+          </button>
+        </div>
         <div class="card-toolbar">
           <el-input
             v-model="searchKeyword"
@@ -173,6 +179,8 @@
         ></el-pagination>
       </div>
     </div>
+
+    <device-map-dialog :visible.sync="deviceMapVisible" @device-detail="handleMapDeviceDetail" />
 
     <!-- 详情抽屉 -->
     <el-drawer
@@ -336,6 +344,8 @@
 
 <script>
   import device from '@/api/device';
+  import DeviceMapDialog from './dialog/DeviceMapDialog.vue';
+  import { buildDeviceFromMapItem } from './data/deviceMapData';
 
   const STATUS_LABEL = {
     0: '未上线',
@@ -363,6 +373,7 @@
 
   export default {
     name: 'MobileSecurityBox',
+    components: { DeviceMapDialog },
     data() {
       return {
         loading: false,
@@ -379,6 +390,7 @@
         detailData: null,
         recentSchedules: [],
         dailyUsages: [],
+        deviceMapVisible: false,
       };
     },
     computed: {
@@ -568,6 +580,25 @@
           console.error(`${actionText}失败:`, error);
           this.$message.error(`${actionText}失败`);
         }
+      },
+      openDeviceMap() {
+        this.deviceMapVisible = true;
+      },
+      handleMapDeviceDetail({ region, device: mapDevice }) {
+        this.openMapDeviceDetail(region, mapDevice);
+      },
+      openMapDeviceDetail(region, mapDevice) {
+        const detail = buildDeviceFromMapItem(region, mapDevice);
+        this.deviceMapVisible = false;
+        this.detailVisible = true;
+        this.detailLoading = false;
+        this.detailData = detail;
+        this.recentSchedules = [
+          { lessonDate: '2026-06-17', courseName: '高等数学（第一节）', teachType: 1, teachTypeName: '主讲' },
+          { lessonDate: '2026-06-16', courseName: '大学英语（第二节）', teachType: 2, teachTypeName: '辅讲' },
+          { lessonDate: '2026-06-15', courseName: '数据结构与算法（第三节）', teachType: 1, teachTypeName: '主讲' },
+        ];
+        this.dailyUsages = this.weeklyUsage.map((d, index) => ({ date: d.date, hours: index === 2 ? 0 : 1 }));
       },
       handleExportExcel() {
         this.$confirm('确认导出设备Excel?', '提示', {
@@ -1127,6 +1158,38 @@
       &:hover {
         background: #fff7e6;
       }
+    }
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    .card-title {
+      margin-bottom: 0;
+    }
+  }
+
+  .map-entry-btn {
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #1890ff;
+    background: #e6f4ff;
+    color: #1890ff;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #fff;
+      background: #1890ff;
     }
   }
 </style>
