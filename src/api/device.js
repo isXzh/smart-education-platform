@@ -14,6 +14,18 @@ export default {
   async page(data) {
     return await http.post('/api/device/page', data);
   },
+  // 分页查询设备区域管理
+  async pageRegion(data) {
+    return await http.post('/api/device/region/page', data);
+  },
+  // 设备借调
+  async borrowDevice(data) {
+    return await http.post('/api/device/region/borrow', data);
+  },
+  // 编辑设备调度备注
+  async updateRegionRemark(data) {
+    return await http.put2('/api/device/region/remark', data);
+  },
   // 软终端-分页查询账号
   async pageMembers(params) {
     return await http.get('/api/device/members', params);

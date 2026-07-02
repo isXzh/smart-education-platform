@@ -130,7 +130,7 @@
                           <h4 :class="{ unread: Number(item.isRead) === 0 }">{{ item.title }}</h4>
                           <span>{{ formatNotificationTime(item.createTime) }}</span>
                         </div>
-                        <p>{{ item.content }}</p>
+                        <p :title="item.content">{{ item.content }}</p>
                         <div v-if="Number(item.isRead) === 0" class="notification-unread">
                           <span></span>
                           <em>未读</em>
@@ -1069,7 +1069,9 @@
               width: 380px;
               background: #fff;
               border-radius: 12px;
-              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+              box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 8px 10px -6px rgba(0, 0, 0, 0.1);
               border: 1px solid #e5e7eb;
               z-index: 50;
               overflow: hidden;
@@ -1124,7 +1126,9 @@
               align-items: center;
               justify-content: center;
               cursor: pointer;
-              transition: background 0.2s, color 0.2s;
+              transition:
+                background 0.2s,
+                color 0.2s;
 
               i {
                 font-size: 14px;
@@ -1159,7 +1163,9 @@
               font-weight: 500;
               line-height: 16px;
               cursor: pointer;
-              transition: background 0.2s, color 0.2s;
+              transition:
+                background 0.2s,
+                color 0.2s;
 
               &.active {
                 background: #dbeafe;
@@ -1330,7 +1336,9 @@
 
           .notification-panel-enter-active,
           .notification-panel-leave-active {
-            transition: opacity 0.2s, transform 0.2s;
+            transition:
+              opacity 0.2s,
+              transform 0.2s;
           }
 
           .notification-panel-enter,

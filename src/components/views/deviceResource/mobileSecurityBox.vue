@@ -82,7 +82,11 @@
             设备分布图
           </button>
         </div>
-        <div class="card-toolbar">
+        <div class="tab-switch">
+          <button :class="['tab-btn', { active: activeTab === 'ledger' }]" @click="handleTabChange('ledger')">台账</button>
+          <button :class="['tab-btn', { active: activeTab === 'region' }]" @click="handleTabChange('region')">区域管理</button>
+        </div>
+        <div v-if="activeTab === 'ledger'" class="card-toolbar">
           <el-input
             v-model="searchKeyword"
             placeholder="搜索设备名称/所属学校/SIP号码..."
@@ -113,70 +117,205 @@
             导出Excel
           </el-button>
         </div>
+        <div v-else class="region-toolbar">
+          <div class="region-filter-group">
+            <el-input
+              v-model="regionSearchKeyword"
+              placeholder="搜索设备名称或学校..."
+              size="small"
+              class="search-input"
+              clearable
+              @input="handleRegionSearchDebounce"
+            >
+              <i slot="prefix" class="el-icon-search el-input__icon"></i>
+            </el-input>
+            <el-select
+              v-model="regionStatusFilter"
+              placeholder="全部状态"
+              size="small"
+              class="status-select"
+              clearable
+              @change="handleRegionStatusChange"
+            >
+              <el-option label="全部状态" :value="null"></el-option>
+              <el-option label="未上线" :value="0"></el-option>
+              <el-option label="在线" :value="1"></el-option>
+              <el-option label="使用中" :value="2"></el-option>
+              <el-option label="维修中" :value="3"></el-option>
+              <el-option label="已过期" :value="4"></el-option>
+            </el-select>
+            <el-button
+              v-if="regionSearchKeyword || regionStatusFilter !== null"
+              type="text"
+              size="small"
+              class="clear-filter-btn"
+              @click="resetRegionFilters"
+            >
+              <i class="el-icon-close"></i>
+              清除
+            </el-button>
+          </div>
+          <div class="region-summary">
+            共 <span>{{ regionTotal }}</span> 台设备， 在线
+            <span class="online">{{ regionOnlineCount }}</span> 台， 使用中
+            <span class="in-use">{{ regionInUseCount }}</span> 台
+          </div>
+        </div>
       </div>
 
-      <!-- 表格 -->
-      <div class="table-wrapper" v-loading="loading">
-        <el-table
-          :data="deviceList"
-          style="width: 100%"
-          :header-cell-style="headerCellStyle"
-          @selection-change="handleSelectionChange"
-          stripe
-        >
-          <el-table-column type="selection" width="50" align="center"></el-table-column>
-          <el-table-column label="序号" width="70" align="left">
-            <template slot-scope="scope">
-              {{ (currentPage - 1) * pageSize + scope.$index + 1 }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="deviceName" label="设备名称" min-width="140">
-            <template slot-scope="scope">
-              <span class="device-name">{{ scope.row.deviceName || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="所属学校" min-width="200">
-            <template slot-scope="scope">
-              <span class="dept-text">{{ scope.row.deptNamePath || scope.row.deptName || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="number" label="SIP 号码" min-width="180">
-            <template slot-scope="scope">
-              <span class="sip-code">{{ scope.row.number || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" width="110">
-            <template slot-scope="scope">
-              <span class="status-tag" :style="getStatusStyle(scope.row.confirmStatus)">
-                <span class="status-dot" :style="{ background: getStatusDot(scope.row.confirmStatus) }"></span>
-                {{ getStatusLabel(scope.row.confirmStatus) }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column label="最后在线" width="160">
-            <template slot-scope="scope">
-              <span class="last-online">{{ formatLastOnline(scope.row.lastHeartbeatAt) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="100" align="right">
-            <template slot-scope="scope">
-              <el-button type="text" size="small" @click="openDetail(scope.row)">详情</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      <div v-if="activeTab === 'ledger'">
+        <div class="table-wrapper" v-loading="loading">
+          <el-table
+            :data="deviceList"
+            style="width: 100%"
+            :header-cell-style="headerCellStyle"
+            @selection-change="handleSelectionChange"
+            stripe
+          >
+            <el-table-column type="selection" width="50" align="center"></el-table-column>
+            <el-table-column label="序号" width="70" align="left">
+              <template slot-scope="scope">
+                {{ (currentPage - 1) * pageSize + scope.$index + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" min-width="140">
+              <template slot-scope="scope">
+                <span class="device-name">{{ scope.row.deviceName || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="所属学校" min-width="200">
+              <template slot-scope="scope">
+                <span class="dept-text">{{ scope.row.deptNamePath || scope.row.deptName || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="number" label="SIP 号码" min-width="180">
+              <template slot-scope="scope">
+                <span class="sip-code">{{ scope.row.number || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="110">
+              <template slot-scope="scope">
+                <span class="status-tag" :style="getStatusStyle(scope.row.confirmStatus)">
+                  <span class="status-dot" :style="{ background: getStatusDot(scope.row.confirmStatus) }"></span>
+                  {{ getStatusLabel(scope.row.confirmStatus) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="最后在线" width="160">
+              <template slot-scope="scope">
+                <span class="last-online">{{ formatLastOnline(scope.row.lastHeartbeatAt) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" align="right">
+              <template slot-scope="scope">
+                <el-button type="text" size="small" @click="openDetail(scope.row)">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
-      <!-- 分页 -->
-      <div class="pagination-wrapper">
-        <div class="pagination-info">共 {{ total }} 条</div>
-        <el-pagination
-          background
-          layout="prev, pager, next"
-          :total="total"
-          :page-size="pageSize"
-          :current-page="currentPage"
-          @current-change="handleCurrentChange"
-        ></el-pagination>
+        <div class="pagination-wrapper">
+          <div class="pagination-info">共 {{ total }} 条</div>
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="total"
+            :page-size="pageSize"
+            :current-page="currentPage"
+            @current-change="handleCurrentChange"
+          ></el-pagination>
+        </div>
+      </div>
+      <div v-else class="region-management">
+        <div class="region-table-wrapper" v-loading="regionLoading">
+          <table class="region-table">
+            <thead>
+              <tr>
+                <th>设备名称</th>
+                <th>当前所在学校</th>
+                <th>上一个学校</th>
+                <th>调度备注</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="regionList.length === 0">
+                <td colspan="5" class="region-empty">暂无匹配的设备</td>
+              </tr>
+              <tr
+                v-for="item in regionList"
+                :key="item.id"
+                :class="['region-row', { borrowed: item.borrowStatus === 1 }]"
+              >
+                <td>
+                  <div class="region-device-name-row">
+                    <span class="region-device-name">{{ item.deviceName || '-' }}</span>
+                    <span v-if="item.borrowStatus === 1" class="borrowed-tag">借调中</span>
+                  </div>
+                  <div class="region-sn">{{ item.number || '-' }}</div>
+                </td>
+                <td>
+                  <el-cascader
+                    v-if="editingLocationId === item.id"
+                    :ref="'regionDeptCascader' + item.id"
+                    v-model="editingDeptCode"
+                    :options="deptOptions"
+                    :props="regionCascaderProps"
+                    placeholder="请选择学校"
+                    size="mini"
+                    class="region-cascader"
+                    clearable
+                    filterable
+                    @change="handleRegionDeptChange"
+                  ></el-cascader>
+                  <button v-else class="current-school-btn" title="点击调度至其他学校" @click="startEditRegionLocation(item)">
+                    <i class="el-icon-location-outline"></i>
+                    {{ item.borrowDeptNamePath || item.borrowDeptName || '-' }}
+                  </button>
+                </td>
+                <td class="previous-school">{{ item.previousSchoolNamePath || item.previousSchoolName || '-' }}</td>
+                <td>
+                  <el-input
+                    v-if="editingRemarkId === item.id"
+                    :ref="'regionRemarkInput' + item.id"
+                    v-model="editingRemarkValue"
+                    size="mini"
+                    class="region-remark-input"
+                    @keyup.enter.native="saveRegionRemark(item)"
+                    @keyup.esc.native="cancelRegionRemark"
+                    @blur="saveRegionRemark(item)"
+                  ></el-input>
+                  <button
+                    v-else
+                    class="region-remark-btn"
+                    :title="item.dispatchRemark || '点击编辑调度备注'"
+                    @click="startEditRegionRemark(item)"
+                  >
+                    <span v-if="item.dispatchRemark">{{ item.dispatchRemark }}</span>
+                    <span v-else class="remark-placeholder">点击编辑调度备注</span>
+                  </button>
+                </td>
+                <td>
+                  <span class="status-tag" :style="getStatusStyle(item.confirmStatus)">
+                    <span class="status-dot" :style="{ background: getStatusDot(item.confirmStatus) }"></span>
+                    {{ getStatusLabel(item.confirmStatus) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-wrapper">
+          <div class="pagination-info">共 {{ regionTotal }} 条</div>
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="regionTotal"
+            :page-size="regionPageSize"
+            :current-page="regionCurrentPage"
+            @current-change="handleRegionCurrentChange"
+          ></el-pagination>
+        </div>
       </div>
     </div>
 
@@ -377,6 +516,7 @@
     data() {
       return {
         loading: false,
+        activeTab: 'ledger',
         searchKeyword: '',
         statusFilter: null,
         currentPage: 1,
@@ -385,6 +525,29 @@
         deviceList: [],
         selectedDevices: [],
         searchTimer: null,
+        regionLoading: false,
+        regionSearchKeyword: '',
+        regionStatusFilter: null,
+        regionCurrentPage: 1,
+        regionPageSize: 10,
+        regionTotal: 0,
+        regionList: [],
+        regionSearchTimer: null,
+        deptOptions: [],
+        regionCascaderProps: {
+          value: 'deptCode',
+          label: 'deptName',
+          children: 'childDepts',
+          checkStrictly: true,
+          emitPath: false,
+        },
+        editingLocationId: null,
+        editingDeptCode: '',
+        pendingDeptNode: null,
+        editingRemarkId: null,
+        editingRemarkValue: '',
+        savingRegionLocation: false,
+        savingRegionRemark: false,
         detailVisible: false,
         detailLoading: false,
         detailData: null,
@@ -425,12 +588,20 @@
       usedDays() {
         return this.weeklyUsage.filter(d => d.hours > 0).length;
       },
+      regionOnlineCount() {
+        return this.regionList.filter(d => d.confirmStatus === 1 || d.confirmStatus === 2).length;
+      },
+      regionInUseCount() {
+        return this.regionList.filter(d => d.confirmStatus === 2).length;
+      },
     },
     mounted() {
       this.loadDeviceList();
     },
     beforeDestroy() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
+      if (this.regionSearchTimer) clearTimeout(this.regionSearchTimer);
+      document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
     },
     methods: {
       headerCellStyle() {
@@ -465,6 +636,221 @@
           this.$message.error('加载设备列表失败');
         } finally {
           this.loading = false;
+        }
+      },
+      handleTabChange(tab) {
+        if (this.activeTab === tab) return;
+        if (this.editingLocationId) {
+          document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+          this.editingLocationId = null;
+          this.editingDeptCode = '';
+          this.pendingDeptNode = null;
+        }
+        this.activeTab = tab;
+        if (tab === 'region') {
+          if (this.regionList.length === 0) this.loadRegionList();
+          if (this.deptOptions.length === 0) this.loadDeptOptions();
+        }
+      },
+      async loadRegionList() {
+        try {
+          this.regionLoading = true;
+          const params = {
+            pageNum: this.regionCurrentPage,
+            pageSize: this.regionPageSize,
+          };
+          if (this.regionSearchKeyword) params.keyword = this.regionSearchKeyword;
+          if (this.regionStatusFilter !== null && this.regionStatusFilter !== '') {
+            params.confirmStatus = this.regionStatusFilter;
+          }
+          const res = await device.pageRegion(params);
+          if (res && res.success && res.data) {
+            this.regionList = res.data.list || [];
+            this.regionTotal = res.data.total || 0;
+          } else {
+            this.regionList = [];
+            this.regionTotal = 0;
+          }
+        } catch (error) {
+          console.error('加载区域管理列表失败:', error);
+          this.$message.error('加载区域管理列表失败');
+        } finally {
+          this.regionLoading = false;
+        }
+      },
+      async loadDeptOptions() {
+        try {
+          const res = await device.deptTree();
+          if (res && res.success && res.data) {
+            this.deptOptions = [this.normalizeDeptNode(res.data, '')];
+          }
+        } catch (error) {
+          console.error('加载组织目录失败:', error);
+          this.$message.error('加载组织目录失败');
+        }
+      },
+      normalizeDeptNode(node, parentPath) {
+        const deptNamePath = node.deptNamePath || (parentPath ? `${parentPath}/${node.deptName || ''}` : node.deptName || '');
+        return {
+          ...node,
+          deptNamePath,
+          childDepts: (node.childDepts || []).map(child => this.normalizeDeptNode(child, deptNamePath)),
+        };
+      },
+      handleRegionSearchDebounce() {
+        if (this.regionSearchTimer) clearTimeout(this.regionSearchTimer);
+        this.regionSearchTimer = setTimeout(() => {
+          this.regionCurrentPage = 1;
+          this.loadRegionList();
+        }, 300);
+      },
+      handleRegionStatusChange() {
+        this.regionCurrentPage = 1;
+        this.loadRegionList();
+      },
+      resetRegionFilters() {
+        this.regionSearchKeyword = '';
+        this.regionStatusFilter = null;
+        this.regionCurrentPage = 1;
+        this.loadRegionList();
+      },
+      handleRegionCurrentChange(page) {
+        this.regionCurrentPage = page;
+        this.loadRegionList();
+      },
+      async startEditRegionLocation(item) {
+        document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+        this.editingLocationId = item.id;
+        this.editingDeptCode = item.borrowDeptCode || '';
+        this.pendingDeptNode = null;
+        if (this.deptOptions.length === 0) await this.loadDeptOptions();
+        this.$nextTick(() => {
+          const cascader = this.$refs[`regionDeptCascader${item.id}`];
+          const target = Array.isArray(cascader) ? cascader[0] : cascader;
+          if (target && target.toggleDropDownVisible) target.toggleDropDownVisible(true);
+          setTimeout(() => {
+            document.addEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+          }, 0);
+        });
+      },
+      handleRegionDeptChange(value) {
+        const deptCode = Array.isArray(value) ? value[value.length - 1] : value;
+        this.editingDeptCode = deptCode || '';
+        this.pendingDeptNode = this.findDeptNode(this.deptOptions, deptCode);
+      },
+      handleRegionLocationOutsideClick(event) {
+        if (!this.editingLocationId) return;
+        const cascader = this.$refs[`regionDeptCascader${this.editingLocationId}`];
+        const target = Array.isArray(cascader) ? cascader[0] : cascader;
+        const inputEl = target && target.$el;
+        const dropdownEl = document.querySelector('.el-cascader__dropdown');
+        if ((inputEl && inputEl.contains(event.target)) || (dropdownEl && dropdownEl.contains(event.target))) return;
+        const item = this.regionList.find(row => row.id === this.editingLocationId);
+        this.closeRegionCascader(target);
+        document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+        if (item) this.saveRegionLocation(item);
+      },
+      closeRegionCascader(cascader) {
+        if (!cascader) return;
+        if (cascader.dropDownVisible !== undefined) cascader.dropDownVisible = false;
+        if (cascader.toggleDropDownVisible) cascader.toggleDropDownVisible(false);
+      },
+      async saveRegionLocation(item) {
+        if (this.editingLocationId !== item.id || this.savingRegionLocation) return;
+        const deptNode = this.pendingDeptNode || this.findDeptNode(this.deptOptions, this.editingDeptCode);
+        if (!deptNode) {
+          document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+          this.editingLocationId = null;
+          this.editingDeptCode = '';
+          this.pendingDeptNode = null;
+          return;
+        }
+        if (deptNode.deptCode === item.borrowDeptCode) {
+          document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+          this.editingLocationId = null;
+          this.editingDeptCode = '';
+          this.pendingDeptNode = null;
+          return;
+        }
+        this.savingRegionLocation = true;
+        try {
+          const res = await device.borrowDevice({
+            id: item.id,
+            borrowDeptCode: deptNode.deptCode,
+            borrowDeptName: deptNode.deptName,
+            borrowDeptNamePath: deptNode.deptNamePath,
+          });
+          if (res && res.success) {
+            this.$message.success('设备借调成功');
+            item.borrowStatus = 1;
+            item.previousSchoolCode = item.borrowDeptCode;
+            item.previousSchoolName = item.borrowDeptName;
+            item.previousSchoolNamePath = item.borrowDeptNamePath;
+            item.borrowDeptCode = deptNode.deptCode;
+            item.borrowDeptName = deptNode.deptName;
+            item.borrowDeptNamePath = deptNode.deptNamePath;
+            this.editingLocationId = null;
+            this.editingDeptCode = '';
+            this.pendingDeptNode = null;
+            document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
+            await this.loadRegionList();
+          } else {
+            this.$message.error(res && res.message ? res.message : '设备借调失败');
+          }
+        } catch (error) {
+          console.error('设备借调失败:', error);
+          this.$message.error('设备借调失败');
+        } finally {
+          this.savingRegionLocation = false;
+        }
+      },
+      findDeptNode(nodes, deptCode) {
+        if (!deptCode) return null;
+        for (const node of nodes || []) {
+          if (node.deptCode === deptCode) return node;
+          const child = this.findDeptNode(node.childDepts || [], deptCode);
+          if (child) return child;
+        }
+        return null;
+      },
+      startEditRegionRemark(item) {
+        this.editingRemarkId = item.id;
+        this.editingRemarkValue = item.dispatchRemark || '';
+        this.$nextTick(() => {
+          const input = this.$refs[`regionRemarkInput${item.id}`];
+          const target = Array.isArray(input) ? input[0] : input;
+          if (target && target.focus) target.focus();
+        });
+      },
+      cancelRegionRemark() {
+        this.editingRemarkId = null;
+        this.editingRemarkValue = '';
+      },
+      async saveRegionRemark(item) {
+        if (this.editingRemarkId !== item.id || this.savingRegionRemark) return;
+        const dispatchRemark = (this.editingRemarkValue || '').trim();
+        if (dispatchRemark === (item.dispatchRemark || '')) {
+          this.cancelRegionRemark();
+          return;
+        }
+        this.savingRegionRemark = true;
+        try {
+          const res = await device.updateRegionRemark({
+            id: item.id,
+            dispatchRemark,
+          });
+          if (res && res.success) {
+            this.$message.success('调度备注已更新');
+            item.dispatchRemark = dispatchRemark;
+            this.cancelRegionRemark();
+          } else {
+            this.$message.error(res && res.message ? res.message : '更新调度备注失败');
+          }
+        } catch (error) {
+          console.error('更新调度备注失败:', error);
+          this.$message.error('更新调度备注失败');
+        } finally {
+          this.savingRegionRemark = false;
         }
       },
       handleSearchDebounce() {
@@ -784,6 +1170,61 @@
     overflow: hidden;
   }
 
+  .tab-switch {
+    display: inline-flex;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    background: #fafafa;
+    padding: 2px;
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #4e5969;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #1d2129;
+    }
+
+    &.active {
+      background: #fff;
+      color: #1890ff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .region-summary {
+    color: #86909c;
+    font-size: 12px;
+
+    span {
+      color: #1d2129;
+      font-weight: 500;
+    }
+
+    .online {
+      color: #52c41a;
+    }
+
+    .in-use {
+      color: #1890ff;
+    }
+  }
+
+  .clear-filter-btn {
+    color: #4e5969;
+    font-size: 12px;
+  }
+
   .card-header {
     padding: 16px;
     border-bottom: 1px solid #e4e7ed;
@@ -802,6 +1243,21 @@
       gap: 8px;
     }
 
+    .region-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .region-filter-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     .search-input {
       width: 240px;
     }
@@ -812,6 +1268,153 @@
 
   .table-wrapper {
     padding: 0;
+  }
+
+  .region-management {
+    background: #fff;
+  }
+
+  .region-table-wrapper {
+    border-top: 1px solid #f0f0f0;
+    overflow-x: auto;
+  }
+
+  .region-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    thead tr {
+      background: #fafafa;
+      color: #4e5969;
+    }
+
+    th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-top: 1px solid #f2f3f5;
+      vertical-align: middle;
+    }
+  }
+
+  .region-row {
+    background: #fff;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #fafafc;
+    }
+
+    &.borrowed {
+      background: #fff7e6;
+
+      &:hover {
+        background: #fff4df;
+      }
+    }
+  }
+
+  .region-empty {
+    padding: 32px 0 !important;
+    text-align: center;
+    color: #86909c;
+  }
+
+  .region-device-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .region-device-name {
+    color: #1d2129;
+    font-weight: 500;
+  }
+
+  .borrowed-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid #ffd591;
+    border-radius: 4px;
+    background: #fff7e6;
+    color: #fa8c16;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .region-sn {
+    margin-top: 2px;
+    color: #86909c;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+
+  .current-school-btn {
+    display: inline-flex;
+    align-items: center;
+    max-width: 280px;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #1d2129;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    i {
+      color: #1890ff;
+      font-size: 13px;
+    }
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+
+  .region-cascader {
+    width: 240px;
+  }
+
+  .previous-school {
+    color: #86909c;
+  }
+
+  .region-remark-input {
+    width: 260px;
+  }
+
+  .region-remark-btn {
+    max-width: 280px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #4e5969;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+
+  .remark-placeholder {
+    color: #c9cdd4;
   }
 
   .device-name {
