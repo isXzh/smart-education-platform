@@ -513,6 +513,7 @@
   export default {
     name: 'MobileSecurityBox',
     components: { DeviceMapDialog },
+    // 初始化移动保障箱页面的响应式数据
     data() {
       return {
         loading: false,
@@ -557,6 +558,7 @@
       };
     },
     computed: {
+      // 统计当前台账列表的设备总数、在线数、使用中数量和过期数量
       counts() {
         const allDevices = this.deviceList;
         const total = this.total;
@@ -565,14 +567,17 @@
         const expired = allDevices.filter(d => d.confirmStatus === 4).length;
         return { total, online, inUse, expired };
       },
+      // 计算当前台账设备的在线率
       onlineRate() {
         if (!this.counts.total) return '0.0';
         return ((this.counts.online / this.counts.total) * 100).toFixed(1);
       },
+      // 计算当前台账设备的使用率
       inUseRate() {
         if (!this.counts.total) return '0.0';
         return ((this.counts.inUse / this.counts.total) * 100).toFixed(1);
       },
+      // 生成设备近七天使用时长数据
       weeklyUsage() {
         const today = new Date();
         const days = [];
@@ -585,25 +590,31 @@
         }
         return days;
       },
+      // 统计近七天内有使用记录的天数
       usedDays() {
         return this.weeklyUsage.filter(d => d.hours > 0).length;
       },
+      // 统计区域管理列表中的在线设备数量
       regionOnlineCount() {
         return this.regionList.filter(d => d.confirmStatus === 1 || d.confirmStatus === 2).length;
       },
+      // 统计区域管理列表中的使用中设备数量
       regionInUseCount() {
         return this.regionList.filter(d => d.confirmStatus === 2).length;
       },
     },
+    // 页面挂载后加载移动保障箱设备台账列表
     mounted() {
       this.loadDeviceList();
     },
+    // 组件销毁前清理搜索定时器和全局事件监听
     beforeDestroy() {
       if (this.searchTimer) clearTimeout(this.searchTimer);
       if (this.regionSearchTimer) clearTimeout(this.regionSearchTimer);
       document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
     },
     methods: {
+      // 设置设备台账表格表头样式
       headerCellStyle() {
         return {
           background: '#FAFAFA',
@@ -612,6 +623,7 @@
           fontSize: '12px',
         };
       },
+      // 加载移动保障箱设备台账分页列表
       async loadDeviceList() {
         try {
           this.loading = true;
@@ -638,6 +650,7 @@
           this.loading = false;
         }
       },
+      // 切换台账和区域管理页签并初始化对应数据
       handleTabChange(tab) {
         if (this.activeTab === tab) return;
         if (this.editingLocationId) {
@@ -652,6 +665,7 @@
           if (this.deptOptions.length === 0) this.loadDeptOptions();
         }
       },
+      // 加载移动保障箱区域管理分页列表
       async loadRegionList() {
         try {
           this.regionLoading = true;
@@ -678,6 +692,7 @@
           this.regionLoading = false;
         }
       },
+      // 加载组织目录树作为区域调度学校选项
       async loadDeptOptions() {
         try {
           const res = await device.deptTree();
@@ -689,6 +704,7 @@
           this.$message.error('加载组织目录失败');
         }
       },
+      // 递归标准化组织节点并补充完整部门路径
       normalizeDeptNode(node, parentPath) {
         const deptNamePath = node.deptNamePath || (parentPath ? `${parentPath}/${node.deptName || ''}` : node.deptName || '');
         return {
@@ -697,6 +713,7 @@
           childDepts: (node.childDepts || []).map(child => this.normalizeDeptNode(child, deptNamePath)),
         };
       },
+      // 区域管理搜索输入防抖并刷新列表
       handleRegionSearchDebounce() {
         if (this.regionSearchTimer) clearTimeout(this.regionSearchTimer);
         this.regionSearchTimer = setTimeout(() => {
@@ -704,20 +721,24 @@
           this.loadRegionList();
         }, 300);
       },
+      // 区域管理状态筛选变化后刷新列表
       handleRegionStatusChange() {
         this.regionCurrentPage = 1;
         this.loadRegionList();
       },
+      // 重置区域管理搜索和状态筛选条件
       resetRegionFilters() {
         this.regionSearchKeyword = '';
         this.regionStatusFilter = null;
         this.regionCurrentPage = 1;
         this.loadRegionList();
       },
+      // 切换区域管理分页页码并刷新列表
       handleRegionCurrentChange(page) {
         this.regionCurrentPage = page;
         this.loadRegionList();
       },
+      // 开始编辑设备当前所在学校并展开学校选择器
       async startEditRegionLocation(item) {
         document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
         this.editingLocationId = item.id;
@@ -733,11 +754,13 @@
           }, 0);
         });
       },
+      // 记录区域调度时选择的目标学校节点
       handleRegionDeptChange(value) {
         const deptCode = Array.isArray(value) ? value[value.length - 1] : value;
         this.editingDeptCode = deptCode || '';
         this.pendingDeptNode = this.findDeptNode(this.deptOptions, deptCode);
       },
+      // 处理区域学校选择器外部点击并触发保存
       handleRegionLocationOutsideClick(event) {
         if (!this.editingLocationId) return;
         const cascader = this.$refs[`regionDeptCascader${this.editingLocationId}`];
@@ -750,11 +773,13 @@
         document.removeEventListener('mousedown', this.handleRegionLocationOutsideClick, true);
         if (item) this.saveRegionLocation(item);
       },
+      // 关闭区域调度学校级联选择器
       closeRegionCascader(cascader) {
         if (!cascader) return;
         if (cascader.dropDownVisible !== undefined) cascader.dropDownVisible = false;
         if (cascader.toggleDropDownVisible) cascader.toggleDropDownVisible(false);
       },
+      // 保存设备借调后的目标学校信息
       async saveRegionLocation(item) {
         if (this.editingLocationId !== item.id || this.savingRegionLocation) return;
         const deptNode = this.pendingDeptNode || this.findDeptNode(this.deptOptions, this.editingDeptCode);
@@ -804,6 +829,7 @@
           this.savingRegionLocation = false;
         }
       },
+      // 根据部门编码在组织树中递归查找部门节点
       findDeptNode(nodes, deptCode) {
         if (!deptCode) return null;
         for (const node of nodes || []) {
@@ -813,6 +839,7 @@
         }
         return null;
       },
+      // 开始编辑设备调度备注并聚焦输入框
       startEditRegionRemark(item) {
         this.editingRemarkId = item.id;
         this.editingRemarkValue = item.dispatchRemark || '';
@@ -822,10 +849,12 @@
           if (target && target.focus) target.focus();
         });
       },
+      // 取消设备调度备注编辑状态
       cancelRegionRemark() {
         this.editingRemarkId = null;
         this.editingRemarkValue = '';
       },
+      // 保存设备调度备注修改
       async saveRegionRemark(item) {
         if (this.editingRemarkId !== item.id || this.savingRegionRemark) return;
         const dispatchRemark = (this.editingRemarkValue || '').trim();
@@ -853,6 +882,7 @@
           this.savingRegionRemark = false;
         }
       },
+      // 设备台账搜索输入防抖并刷新列表
       handleSearchDebounce() {
         if (this.searchTimer) clearTimeout(this.searchTimer);
         this.searchTimer = setTimeout(() => {
@@ -860,32 +890,40 @@
           this.loadDeviceList();
         }, 300);
       },
+      // 设备台账状态筛选变化后刷新列表
       handleStatusChange() {
         this.currentPage = 1;
         this.loadDeviceList();
       },
+      // 切换设备台账分页页码并刷新列表
       handleCurrentChange(page) {
         this.currentPage = page;
         this.loadDeviceList();
       },
+      // 更新设备台账表格的已选设备集合
       handleSelectionChange(selection) {
         this.selectedDevices = selection;
       },
+      // 根据设备状态值获取状态名称
       getStatusLabel(status) {
         return STATUS_LABEL[status] || '-';
       },
+      // 根据设备状态值获取状态标签样式
       getStatusStyle(status) {
         const s = STATUS_COLOR[status];
         if (!s) return {};
         return { color: s.color, background: s.bg };
       },
+      // 根据设备状态值获取状态圆点颜色
       getStatusDot(status) {
         const s = STATUS_COLOR[status];
         return s ? s.dot : '#8C8C8C';
       },
+      // 根据设备状态值获取状态说明文案
       getStatusDesc(status) {
         return STATUS_DESC[status] || '';
       },
+      // 将日期时间格式化为年月日字符串
       formatDate(value) {
         if (!value) return '-';
         const d = new Date(value);
@@ -895,6 +933,7 @@
         const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
       },
+      // 将日期时间格式化为月日字符串
       formatShortDate(value) {
         if (!value) return '';
         const d = new Date(value);
@@ -903,12 +942,14 @@
         const day = String(d.getDate()).padStart(2, '0');
         return `${m}-${day}`;
       },
+      // 将日期对象转换为年月日字符串
       toDateString(d) {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
       },
+      // 将最后在线时间格式化为相对时间
       formatLastOnline(value) {
         if (!value) return '-';
         const d = new Date(value);
@@ -921,6 +962,7 @@
         if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} 天前`;
         return this.formatDate(value);
       },
+      // 打开设备详情抽屉并加载设备详情数据
       async openDetail(row) {
         this.detailVisible = true;
         this.detailData = row;
@@ -941,6 +983,7 @@
           this.detailLoading = false;
         }
       },
+      // 切换设备维修或正常状态
       async handleToggleRepair(row, toRepair) {
         const confirmStatus = toRepair ? 3 : 1;
         const actionText = toRepair ? '标记维修' : '标记正常';
@@ -967,12 +1010,15 @@
           this.$message.error(`${actionText}失败`);
         }
       },
+      // 打开设备分布地图弹窗
       openDeviceMap() {
         this.deviceMapVisible = true;
       },
+      // 处理地图弹窗中的设备详情查看事件
       handleMapDeviceDetail({ region, device: mapDevice }) {
         this.openMapDeviceDetail(region, mapDevice);
       },
+      // 根据地图设备数据打开设备详情抽屉
       openMapDeviceDetail(region, mapDevice) {
         const detail = buildDeviceFromMapItem(region, mapDevice);
         this.deviceMapVisible = false;
@@ -986,6 +1032,7 @@
         ];
         this.dailyUsages = this.weeklyUsage.map((d, index) => ({ date: d.date, hours: index === 2 ? 0 : 1 }));
       },
+      // 确认导出移动保障箱设备 Excel
       handleExportExcel() {
         this.$confirm('确认导出设备Excel?', '提示', {
           confirmButtonText: '确定',
@@ -997,6 +1044,7 @@
           })
           .catch(() => {});
       },
+      // 导出当前移动保障箱设备数据为 Excel 文件
       async exportExcel() {
         try {
           let ids = [];
